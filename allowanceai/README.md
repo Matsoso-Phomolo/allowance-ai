@@ -107,14 +107,14 @@ FRONTEND_URL=https://your-frontend-url.onrender.com
 
 Create a Render Static Site for the frontend.
 
-- Root directory: `frontend`
+- Root directory: `allowanceai/frontend`
 - Build command: `npm install && npm run build`
 - Publish directory: `dist`
 
 Set this frontend environment variable in Render:
 
 ```bash
-VITE_API_BASE_URL=https://your-backend-url.onrender.com
+VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
 ```
 
 ### PostgreSQL Notes
