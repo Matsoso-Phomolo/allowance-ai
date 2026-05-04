@@ -13,9 +13,13 @@ from database import Base, SessionLocal, engine, get_db
 
 app = FastAPI(title="AllowanceAI API", version="1.0.0")
 
-LOCAL_FRONTEND_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+DEFAULT_FRONTEND_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://allowance-ai.onrender.com",
+]
 frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
-allowed_origins = LOCAL_FRONTEND_ORIGINS + ([frontend_url] if frontend_url else [])
+allowed_origins = DEFAULT_FRONTEND_ORIGINS + ([frontend_url] if frontend_url else [])
 
 app.add_middleware(
     CORSMiddleware,
