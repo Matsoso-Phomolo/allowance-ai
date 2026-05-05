@@ -13,6 +13,7 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
     expense_date: "",
   });
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("safe");
 
   function startEditing(expense) {
     setMessage("");
@@ -27,12 +28,13 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
 
   async function handleUpdate(event) {
     event.preventDefault();
-    await onUpdateExpense(editingId, {
+    const result = await onUpdateExpense(editingId, {
       ...form,
       amount: Number(form.amount),
     });
     setEditingId(null);
-    setMessage("Expense updated.");
+    setMessageType(result?.feedback?.type || "safe");
+    setMessage(result?.feedback?.message || "Expense updated.");
   }
 
   async function handleDelete(expense) {
@@ -43,6 +45,7 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
     }
 
     await onDeleteExpense(expense.id);
+    setMessageType("safe");
     setMessage("Expense deleted.");
   }
 
@@ -53,7 +56,7 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
         <span>{expenses.length} records</span>
       </div>
 
-      {message && <p className="form-message category-message">{message}</p>}
+      {message && <p className={`notice ${messageType}`}>{message}</p>}
 
       <div className="expense-list">
         {expenses.length === 0 ? (

@@ -274,7 +274,19 @@ def add_expense(db: Session, expense: schemas.ExpenseCreate, user: models.User):
     db.commit()
     db.refresh(db_expense)
     rebuild_behavior_tracking(db, user)
-    return db_expense
+    updated_category = next(
+        category_data for category_data in get_categories(db, user) if category_data["id"] == category.id
+    )
+    return {
+        "expense": {
+            "id": db_expense.id,
+            "item_name": db_expense.item_name,
+            "amount": round(db_expense.amount, 2),
+            "category_name": db_expense.category.name,
+            "expense_date": db_expense.expense_date,
+        },
+        "feedback": decision_engine.expense_entry_feedback(updated_category),
+    }
 
 
 def get_expense_by_id(db: Session, expense_id: int, user: models.User):
@@ -297,7 +309,19 @@ def update_expense(db: Session, expense_id: int, expense_update: schemas.Expense
     db.commit()
     db.refresh(expense)
     rebuild_behavior_tracking(db, user)
-    return expense
+    updated_category = next(
+        category_data for category_data in get_categories(db, user) if category_data["id"] == category.id
+    )
+    return {
+        "expense": {
+            "id": expense.id,
+            "item_name": expense.item_name,
+            "amount": round(expense.amount, 2),
+            "category_name": expense.category.name,
+            "expense_date": expense.expense_date,
+        },
+        "feedback": decision_engine.expense_entry_feedback(updated_category),
+    }
 
 
 def delete_expense(db: Session, expense_id: int, user: models.User):

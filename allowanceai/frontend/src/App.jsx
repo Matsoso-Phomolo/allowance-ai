@@ -123,13 +123,15 @@ export default function App() {
   }
 
   async function handleAddExpense(expense) {
-    await addExpense(expense);
+    const result = await addExpense(expense);
     await loadDashboard();
+    return result;
   }
 
   async function handleUpdateExpense(id, expense) {
-    await updateExpense(id, expense);
+    const result = await updateExpense(id, expense);
     await loadDashboard();
+    return result;
   }
 
   async function handleDeleteExpense(id) {

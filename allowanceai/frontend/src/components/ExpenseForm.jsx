@@ -8,11 +8,12 @@ export default function ExpenseForm({ categories, onAddExpense }) {
     expense_date: new Date().toISOString().slice(0, 10),
   });
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("safe");
 
   async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
-    await onAddExpense({
+    const result = await onAddExpense({
       ...form,
       amount: Number(form.amount),
     });
@@ -22,7 +23,8 @@ export default function ExpenseForm({ categories, onAddExpense }) {
       amount: "",
       expense_date: new Date().toISOString().slice(0, 10),
     }));
-    setMessage("Expense added.");
+    setMessageType(result?.feedback?.type || "safe");
+    setMessage(result?.feedback?.message || "Expense added.");
   }
 
   return (
@@ -78,7 +80,7 @@ export default function ExpenseForm({ categories, onAddExpense }) {
           </select>
         </label>
         <button type="submit">Add Spending</button>
-        {message && <p className="form-message">{message}</p>}
+        {message && <p className={`notice ${messageType}`}>{message}</p>}
       </form>
     </section>
   );

@@ -88,6 +88,79 @@ def get_category_status_label(category_name: str, percentage_used: float, remain
     return get_category_status(percentage_used, category_name, remaining_amount).upper()
 
 
+def expense_entry_feedback(category: dict) -> dict:
+    category_name = category["name"]
+    remaining = category["remaining_amount"]
+    percentage = category["percentage_used"]
+
+    if remaining < 0:
+        return {
+            "type": "danger",
+            "message": (
+                f"This expense puts {category_name} over budget by R{abs(remaining):.2f}. "
+                "Edit or reduce the expense to stay within the planned amount."
+            ),
+            **decision(
+                "DANGER",
+                0.9,
+                f"{category_name} is now above its planned budget.",
+                [f"Reduce this expense by at least R{abs(remaining):.2f}, or move money from a flexible category."],
+                {"risk_score": 90, "category": category_name, "remaining_amount": remaining},
+            ),
+        }
+
+    if is_fixed_obligation_category(category_name) and percentage >= 100:
+        return {
+            "type": "safe",
+            "message": f"Congratulations, {category_name} is fully paid for this month.",
+            **decision(
+                "SAFE",
+                0.9,
+                f"{category_name} is a fixed monthly obligation and has reached its planned amount.",
+                ["Keep this payment recorded and avoid spending extra in this category unless the bill changes."],
+                {"risk_score": 5, "category": category_name, "remaining_amount": remaining},
+            ),
+        }
+
+    if percentage >= 100:
+        return {
+            "type": "warning",
+            "message": f"{category_name} has reached its planned budget. Further spending here will go over budget.",
+            **decision(
+                "WARNING",
+                0.86,
+                f"{category_name} has no planned money left.",
+                ["Use the Edit button in Recent Expenses if this amount needs to be adjusted."],
+                {"risk_score": 70, "category": category_name, "remaining_amount": remaining},
+            ),
+        }
+
+    if percentage >= 75:
+        return {
+            "type": "warning",
+            "message": f"{category_name} has used {percentage:.0f}% of its planned budget.",
+            **decision(
+                "WARNING",
+                0.78,
+                f"{category_name} is close to its planned limit.",
+                ["Spend carefully in this category for the rest of the month."],
+                {"risk_score": round(percentage), "category": category_name, "remaining_amount": remaining},
+            ),
+        }
+
+    return {
+        "type": "safe",
+        "message": f"Expense saved. {category_name} is still within budget.",
+        **decision(
+            "SAFE",
+            0.75,
+            f"{category_name} still has planned money remaining.",
+            [],
+            {"risk_score": round(percentage), "category": category_name, "remaining_amount": remaining},
+        ),
+    }
+
+
 def risk_from_balance(remaining_money: float, allowance: float) -> int:
     if allowance <= 0 or remaining_money < 0:
         return 100
@@ -359,7 +432,21 @@ def build_alerts(summary: dict, categories: list[dict], today: date | None = Non
     intelligence = build_budget_intelligence(summary, categories, today, behavior)
     for category in categories:
         cat_risk = category_risk(category)
-        if category["remaining_amount"] < 0:
+        if is_fixed_obligation_category(category["name"]) and category["percentage_used"] >= 100 and category["remaining_amount"] >= 0:
+            alerts.append(
+                {
+                    "type": "safe",
+                    "message": f"Congratulations, {category['name']} is fully paid for this month.",
+                    **decision(
+                        "SAFE",
+                        intelligence["confidence"],
+                        f"{category['name']} is a fixed monthly obligation and is fully paid.",
+                        ["Keep it recorded as paid and avoid extra spending in this category unless the bill changes."],
+                        {"risk_score": 5, "category_velocity": 0, "trend": "stable"},
+                    ),
+                }
+            )
+        elif category["remaining_amount"] < 0:
             alerts.append(
                 {
                     "type": "danger",
