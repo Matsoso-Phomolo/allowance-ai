@@ -1,6 +1,14 @@
-const DEPLOYMENT_VERSION = "1.0.0";
+const DEPLOYMENT_VERSION = "1.0.1";
 const CACHE_NAME = `allowanceai-${DEPLOYMENT_VERSION}`;
-const APP_SHELL = ["/", "/manifest.webmanifest", "/version.json", "/icon.svg", "/icon-192.png", "/icon-512.png"];
+const APP_SHELL = [
+  "/",
+  "/offline.html",
+  "/manifest.webmanifest",
+  "/version.json",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -43,7 +51,7 @@ self.addEventListener("fetch", (event) => {
           return cached;
         }
         if (request.mode === "navigate") {
-          return caches.match("/");
+          return (await caches.match("/")) || caches.match("/offline.html");
         }
         return Response.error();
       })

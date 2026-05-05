@@ -31,7 +31,7 @@ import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "dev";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.1";
 
 export default function App() {
   const [budget, setBudget] = useState(null);
@@ -47,6 +47,7 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => window.navigator.onLine);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -109,15 +110,6 @@ export default function App() {
           return;
         }
 
-        if (!user) {
-          const reloadKey = `allowanceai_reload_${latestVersion}`;
-          if (!sessionStorage.getItem(reloadKey)) {
-            sessionStorage.setItem(reloadKey, "true");
-            window.location.reload();
-            return;
-          }
-        }
-
         setUpdateAvailable(true);
       } catch {
         // Version checks should never interrupt normal budgeting.
@@ -132,6 +124,19 @@ export default function App() {
       window.clearInterval(intervalId);
     };
   }, [user]);
+
+  useEffect(() => {
+    function updateOnlineState() {
+      setIsOnline(window.navigator.onLine);
+    }
+
+    window.addEventListener("online", updateOnlineState);
+    window.addEventListener("offline", updateOnlineState);
+    return () => {
+      window.removeEventListener("online", updateOnlineState);
+      window.removeEventListener("offline", updateOnlineState);
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -213,9 +218,7 @@ export default function App() {
 
   if (!authChecked || loading && user) {
     return (
-      <div className="app-shell">
-        <main className="loading-panel">Loading dashboard...</main>
-      </div>
+      <SplashScreen />
     );
   }
 
@@ -225,12 +228,14 @@ export default function App() {
         <Register
           onRegister={handleRegister}
           onShowLogin={() => setAuthMode("login")}
+          offlineNotice={!isOnline ? <OfflineBanner /> : null}
           updateNotice={updateAvailable ? <UpdateBanner /> : null}
         />
       ) : (
         <Login
           onLogin={handleLogin}
           onShowRegister={() => setAuthMode("register")}
+          offlineNotice={!isOnline ? <OfflineBanner /> : null}
           updateNotice={updateAvailable ? <UpdateBanner /> : null}
         />
       )
@@ -240,6 +245,7 @@ export default function App() {
   return (
     <div className="app-shell">
       {updateAvailable && <UpdateBanner />}
+      {!isOnline && <OfflineBanner />}
       <header className="app-header">
         <div>
           <h1>AllowanceAI</h1>
@@ -278,6 +284,26 @@ export default function App() {
           user={user}
         />
       <footer className="app-footer">AllowanceAI | Produced by Matsoso P</footer>
+    </div>
+  );
+}
+
+function SplashScreen() {
+  return (
+    <main className="splash-screen">
+      <section className="splash-card">
+        <div className="splash-logo">AI</div>
+        <h1>AllowanceAI</h1>
+        <p>Preparing your budget dashboard...</p>
+      </section>
+    </main>
+  );
+}
+
+function OfflineBanner() {
+  return (
+    <div className="offline-banner">
+      You are offline. Some features may be unavailable.
     </div>
   );
 }

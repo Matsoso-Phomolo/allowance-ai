@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 
 export default function InstallButton({ compact = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [isStandalone, setIsStandalone] = useState(
+    () => window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone
+  );
   const [message, setMessage] = useState("");
   const [showMobileHelp, setShowMobileHelp] = useState(false);
   const isMobile =
@@ -14,9 +17,21 @@ export default function InstallButton({ compact = false }) {
       setInstallPrompt(event);
     }
 
+    function handleAppInstalled() {
+      setIsStandalone(true);
+    }
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
   }, []);
+
+  if (isStandalone) {
+    return null;
+  }
 
   function getAppUrl() {
     return window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
