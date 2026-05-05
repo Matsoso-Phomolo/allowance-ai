@@ -2,7 +2,7 @@ import { useState } from "react";
 import InstallButton from "./InstallButton";
 import PasswordInput from "./PasswordInput";
 
-export default function Login({ onLogin, onShowRegister }) {
+export default function Login({ onLogin, onShowRegister, updateNotice }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -20,6 +20,7 @@ export default function Login({ onLogin, onShowRegister }) {
     <main className="auth-shell">
       <section className="panel auth-panel">
         <h1>AllowanceAI</h1>
+        {updateNotice}
         <form className="form" onSubmit={handleSubmit}>
           <label>
             Email

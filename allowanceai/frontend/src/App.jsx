@@ -221,14 +221,19 @@ export default function App() {
 
   if (!user) {
     return (
-      <>
-        {updateAvailable && <UpdateBanner />}
-        {authMode === "register" ? (
-          <Register onRegister={handleRegister} onShowLogin={() => setAuthMode("login")} />
-        ) : (
-          <Login onLogin={handleLogin} onShowRegister={() => setAuthMode("register")} />
-        )}
-      </>
+      authMode === "register" ? (
+        <Register
+          onRegister={handleRegister}
+          onShowLogin={() => setAuthMode("login")}
+          updateNotice={updateAvailable ? <UpdateBanner /> : null}
+        />
+      ) : (
+        <Login
+          onLogin={handleLogin}
+          onShowRegister={() => setAuthMode("register")}
+          updateNotice={updateAvailable ? <UpdateBanner /> : null}
+        />
+      )
     );
   }
 

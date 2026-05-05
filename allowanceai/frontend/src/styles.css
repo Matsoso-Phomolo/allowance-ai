@@ -152,6 +152,15 @@ button:disabled {
   background: #e8eef8;
 }
 
+.auth-panel .update-banner {
+  box-shadow: none;
+  left: auto;
+  position: static;
+  top: auto;
+  transform: none;
+  width: 100%;
+}
+
 .app-header {
   align-items: end;
   display: flex;
