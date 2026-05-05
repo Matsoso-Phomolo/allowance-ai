@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
 class BudgetCreate(BaseModel):
@@ -32,6 +32,7 @@ class CategoryResponse(BaseModel):
     remaining_amount: float
     percentage_used: float
     status: str
+    status_label: str | None = None
 
     class Config:
         from_attributes = True
@@ -72,7 +73,12 @@ class CanIBuyResponse(BaseModel):
 
 
 class FixedCommitments(BaseModel):
-    econet_data: float = Field(0, ge=0, alias="Econet Data")
+    data_bundles: float = Field(
+        0,
+        ge=0,
+        validation_alias=AliasChoices("Data Bundles", "Econet Data"),
+        serialization_alias="Data Bundles",
+    )
     mokhatlo: float = Field(0, ge=0, alias="Mokhatlo")
     savings: float = Field(0, ge=0, alias="Savings")
 

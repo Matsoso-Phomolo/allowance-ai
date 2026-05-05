@@ -91,7 +91,7 @@ export default function CategoryList({ categories, onDeleteCategory, onUpdateCat
                       {money(category.spent_amount)} of {money(category.planned_amount)}
                     </span>
                   </div>
-                  <span className={`pill ${category.status}`}>{category.status}</span>
+                  <span className={`pill ${category.status}`}>{category.status_label || category.status}</span>
                 </div>
                 <div className="progress-track">
                   <div

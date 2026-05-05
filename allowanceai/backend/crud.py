@@ -240,6 +240,7 @@ def get_categories(db: Session, user: models.User) -> list[dict]:
         )
         remaining = category.planned_amount - spent
         percentage = (spent / category.planned_amount * 100) if category.planned_amount else 100
+        status = decision_engine.get_category_status(percentage, category.name, remaining)
 
         results.append(
             {
@@ -249,7 +250,8 @@ def get_categories(db: Session, user: models.User) -> list[dict]:
                 "spent_amount": round(spent, 2),
                 "remaining_amount": round(remaining, 2),
                 "percentage_used": round(percentage, 2),
-                "status": decision_engine.get_category_status(percentage),
+                "status": status,
+                "status_label": decision_engine.get_category_status_label(category.name, percentage, remaining),
             }
         )
 

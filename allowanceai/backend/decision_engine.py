@@ -3,9 +3,26 @@ from datetime import date
 
 
 PROTECTED_CATEGORIES = {"savings", "emergency"}
-ESSENTIAL_CATEGORIES = {"food", "econet data", "data", "mokhatlo"}
+ESSENTIAL_CATEGORIES = {
+    "food",
+    "data",
+    "data bundles",
+    "vodacom data",
+    "mtn data",
+    "econet data",
+    "mokhatlo",
+    "rent",
+}
 FLEXIBLE_CATEGORIES = {"snacks", "cosmetics", "other"}
 SPEED_SENSITIVE_CATEGORIES = {"snacks", "fruit", "fruits", "sweets", "simbas", "chips"}
+FIXED_OBLIGATION_CATEGORIES = {
+    "rent",
+    "contract data",
+    "monthly data",
+    "econet data",
+    "internet contract",
+    "wifi contract",
+}
 REDUCTION_ORDER = {"snacks": 0, "cosmetics": 1}
 
 
@@ -47,12 +64,28 @@ def get_budget_status(remaining_money: float, allowance: float) -> str:
     return status_from_risk(risk).lower()
 
 
-def get_category_status(percentage_used: float) -> str:
+def is_fixed_obligation_category(category_name: str) -> bool:
+    return category_name.strip().lower() in FIXED_OBLIGATION_CATEGORIES
+
+
+def get_category_status(percentage_used: float, category_name: str = "", remaining_amount: float | None = None) -> str:
+    if remaining_amount is not None and remaining_amount < 0:
+        return "danger"
+    if is_fixed_obligation_category(category_name) and percentage_used >= 100:
+        return "safe"
     if percentage_used >= 100:
         return "danger"
     if percentage_used >= 75:
         return "warning"
     return "safe"
+
+
+def get_category_status_label(category_name: str, percentage_used: float, remaining_amount: float) -> str:
+    if remaining_amount < 0:
+        return "OVER"
+    if is_fixed_obligation_category(category_name) and percentage_used >= 100:
+        return "PAID"
+    return get_category_status(percentage_used, category_name, remaining_amount).upper()
 
 
 def risk_from_balance(remaining_money: float, allowance: float) -> int:
@@ -128,6 +161,8 @@ def confidence_from_behavior(behavior_metrics: dict) -> float:
 def category_risk(category: dict, category_velocity: float = 0) -> int:
     if category["remaining_amount"] < 0:
         return 90
+    if is_fixed_obligation_category(category["name"]) and category["percentage_used"] >= 100:
+        return 5
     base = min(category["percentage_used"], 100)
     if is_speed_sensitive_category(category["name"]) and category_velocity > 1:
         base += min((category_velocity - 1) * 25, 25)
@@ -203,7 +238,9 @@ def build_budget_intelligence(summary: dict, categories: list[dict], today: date
         category_velocity = daily_spend / safe_category_daily if safe_category_daily > 0 else 0
         cat_risk = category_risk(category, category_velocity)
         category_trend = behavior_metrics["category_spend_trends"].get(category["name"], "stable")
-        if category_trend == "increasing":
+        if is_fixed_obligation_category(category["name"]) and category["percentage_used"] >= 100 and category["remaining_amount"] >= 0:
+            category_trend = "stable"
+        elif category_trend == "increasing":
             cat_risk = min(cat_risk + 10, 100)
         elif category_trend == "decreasing":
             cat_risk = max(cat_risk - 5, 0)
@@ -460,8 +497,9 @@ def preference_multiplier(level: str, low: float, medium: float, high: float) ->
 
 def generate_monthly_plan(allowance: float, month: str, fixed_commitments: dict, user_preferences: dict, behavior: dict | None = None) -> dict:
     behavior_metrics = behavior_summary(behavior)
+    data_commitment = fixed_commitments.get("Data Bundles", fixed_commitments.get("Econet Data", 0))
     protected = {
-        "Econet Data": round(fixed_commitments.get("Econet Data", 0), 2),
+        "Data Bundles": round(data_commitment, 2),
         "Mokhatlo": round(fixed_commitments.get("Mokhatlo", 0), 2),
         "Savings": round(fixed_commitments.get("Savings", 0), 2),
     }
@@ -492,7 +530,7 @@ def generate_monthly_plan(allowance: float, month: str, fixed_commitments: dict,
     status = status_from_risk(risk_score)
     recommendations = [
         "Savings and Emergency are protected first.",
-        "Keep Mokhatlo and Econet Data stable as essential commitments.",
+        "Keep Mokhatlo and fixed data commitments stable as essential commitments.",
         "If money is tight, reduce Snacks first, then Cosmetics, then other flexible spending.",
     ]
     if unallocated > 0:

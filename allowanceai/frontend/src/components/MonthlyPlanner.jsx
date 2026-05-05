@@ -12,7 +12,7 @@ export default function MonthlyPlanner({ budget, onCreatePlan }) {
   const [form, setForm] = useState({
     allowance: budget?.allowance || 1500,
     month: currentMonth(),
-    econetData: 250,
+    dataBundles: 250,
     mokhatlo: 200,
     savings: budget?.savings_target || 100,
     foodPriority: "medium",
@@ -27,7 +27,7 @@ export default function MonthlyPlanner({ budget, onCreatePlan }) {
       allowance: Number(form.allowance),
       month: form.month,
       fixed_commitments: {
-        "Econet Data": Number(form.econetData),
+        "Data Bundles": Number(form.dataBundles),
         Mokhatlo: Number(form.mokhatlo),
         Savings: Number(form.savings),
       },
@@ -71,13 +71,13 @@ export default function MonthlyPlanner({ budget, onCreatePlan }) {
 
         <div className="form-row">
           <label>
-            Econet Data
+            Data / Contract
             <input
               min="0"
               required
               type="number"
-              value={form.econetData}
-              onChange={(event) => setForm({ ...form, econetData: event.target.value })}
+              value={form.dataBundles}
+              onChange={(event) => setForm({ ...form, dataBundles: event.target.value })}
             />
           </label>
           <label>

@@ -1,6 +1,6 @@
 # AllowanceAI
 
-AllowanceAI is a budgeting app for managing a monthly allowance with user accounts, budget categories, expenses, savings, Econet data, mokhatlo savings, food, cosmetics, snacks, reports, alerts, a centralized rule-based decision engine, budget intelligence, and personal planning tools.
+AllowanceAI is a budgeting app for managing a monthly allowance with user accounts, budget categories, expenses, savings, data bundles, mokhatlo savings, food, cosmetics, snacks, reports, alerts, a centralized rule-based decision engine, budget intelligence, and personal planning tools.
 
 ## Tech Stack
 
@@ -124,6 +124,22 @@ VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
 - Never commit real database passwords, production database URLs, or production secret keys.
 - Keep local secrets in `backend/.env`; configure production secrets inside Render.
 
+### Copy Local Account Data To Render
+
+Local and deployed accounts use different PostgreSQL databases. To use the same account and budget data online, copy the local PostgreSQL rows to the Render PostgreSQL database.
+
+Get the Render PostgreSQL external database URL from the Render dashboard, then run this locally from `allowanceai/backend`:
+
+```bash
+set TARGET_DATABASE_URL=postgresql://render-user:render-password@render-host/render-db
+set MIGRATE_USER_EMAIL=you@example.com
+python migrate_postgres_to_render.py
+```
+
+`MIGRATE_USER_EMAIL` is optional. If set, only that account and its budgets, categories, expenses, reports data, and behavior tracking rows are copied. The migration preserves the same hashed password, so the same login should work online after migration.
+
+Do not commit the Render database URL. It is a secret.
+
 ## Default New Account Data
 
 When a user registers, AllowanceAI seeds that user with a default monthly budget plus these categories:
@@ -131,7 +147,9 @@ When a user registers, AllowanceAI seeds that user with a default monthly budget
 - Food: R500
 - Snacks: R200
 - Cosmetics: R150
-- Econet Data: R250
+- Data Bundles: R250
+
+Use `Data Bundles` for prepaid or provider-neutral data budgets such as Vodacom, MTN, or Econet bundles. You can rename the category to match your provider. Use names such as `Contract Data` or `Monthly Data` for fixed monthly data payments; when those are fully paid, AllowanceAI treats them as paid commitments instead of danger spending.
 - Mokhatlo: R200
 - Savings: R100
 - Emergency: R100

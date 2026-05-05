@@ -9,7 +9,7 @@ DEFAULT_CATEGORIES = [
     ("Food", 500),
     ("Snacks", 200),
     ("Cosmetics", 150),
-    ("Econet Data", 250),
+    ("Data Bundles", 250),
     ("Mokhatlo", 200),
     ("Savings", 100),
     ("Emergency", 100),
