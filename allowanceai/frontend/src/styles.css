@@ -97,6 +97,22 @@ button:disabled {
   text-align: center;
 }
 
+.install-help {
+  background: #eef6ff;
+  border: 1px solid #c8dcff;
+  border-radius: 8px;
+  color: #1f365f;
+  display: grid;
+  font-size: 0.78rem;
+  gap: 5px;
+  line-height: 1.35;
+  padding: 10px;
+}
+
+.install-help strong {
+  color: #172033;
+}
+
 .app-shell {
   margin: 0 auto;
   max-width: 1240px;

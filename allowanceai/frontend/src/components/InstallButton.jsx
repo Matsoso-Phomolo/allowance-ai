@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 export default function InstallButton({ compact = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [message, setMessage] = useState("");
+  const [showMobileHelp, setShowMobileHelp] = useState(false);
   const isMobile =
     /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent) ||
     window.matchMedia?.("(max-width: 720px)").matches;
@@ -51,8 +52,9 @@ export default function InstallButton({ compact = false }) {
       const instruction =
         /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
           ? "On iPhone: tap Share, then Add to Home Screen."
-          : "On Android: tap the browser menu, then Add to Home screen or Install app.";
+          : "Tap the three dots in the top-right browser menu, then choose Add to Home screen or Install app.";
       setMessage(instruction);
+      setShowMobileHelp(true);
       return;
     }
 
@@ -101,12 +103,20 @@ export default function InstallButton({ compact = false }) {
         type="button"
         onClick={handleDownload}
       >
-        {isMobile ? "Add to Screen" : "Download App"}
+        {isMobile && !installPrompt ? "How to Add App" : isMobile ? "Add to Screen" : "Download App"}
       </button>
       {!compact && (
         <p className="install-message">
-          {message || (isMobile ? "Adds AllowanceAI to your phone home screen." : "Choose Desktop when saving so it appears with your icons.")}
+          {message || (isMobile ? "If prompted, allow Chrome to add AllowanceAI to your home screen." : "Choose Desktop when saving so it appears with your icons.")}
         </p>
+      )}
+      {showMobileHelp && !compact && (
+        <div className="install-help">
+          <strong>Android Chrome steps</strong>
+          <span>1. Tap the three dots at the top right.</span>
+          <span>2. Tap Add to Home screen or Install app.</span>
+          <span>3. Tap Add. The AllowanceAI icon will appear with your phone apps.</span>
+        </div>
       )}
     </div>
   );
