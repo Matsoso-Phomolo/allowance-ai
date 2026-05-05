@@ -116,7 +116,7 @@ Set this frontend environment variable in Render:
 
 ```bash
 VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
-VITE_APP_VERSION=1.0.4
+VITE_APP_VERSION=1.0.5
 ```
 
 ### Android PWA Install
@@ -139,10 +139,10 @@ Before each frontend deployment, bump the version in both places:
 
 ```bash
 # allowanceai/frontend/public/version.json
-{ "version": "1.0.5" }
+{ "version": "1.0.6" }
 
 # Render frontend environment variable
-VITE_APP_VERSION=1.0.5
+VITE_APP_VERSION=1.0.6
 ```
 
 Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so the service worker uses a fresh cache name and removes old caches during activation. The service worker caches the app shell, claims clients after activation, deletes old caches, and serves `offline.html` as a friendly fallback if the user opens the app while offline.

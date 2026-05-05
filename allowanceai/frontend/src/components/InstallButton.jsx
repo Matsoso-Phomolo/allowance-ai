@@ -67,7 +67,7 @@ export default function InstallButton({ compact = false }) {
       const instruction =
         /iPhone|iPad|iPod/i.test(window.navigator.userAgent)
           ? "On iPhone: tap Share, then Add to Home Screen."
-          : "Tap the three dots in the top-right browser menu, then choose Add to Home screen or Install app.";
+          : "Chrome will show the install prompt when the app is ready. You can also use the browser menu and choose Install app.";
       setMessage(instruction);
       setShowMobileHelp(true);
       return;
@@ -118,11 +118,11 @@ export default function InstallButton({ compact = false }) {
         type="button"
         onClick={handleDownload}
       >
-        {isMobile && !installPrompt ? "How to Add App" : isMobile ? "Add to Screen" : "Download App"}
+        {isMobile ? "Add to Screen" : "Download App"}
       </button>
       {!compact && (
         <p className="install-message">
-          {message || (isMobile ? "If prompted, allow Chrome to add AllowanceAI to your home screen." : "Choose Desktop when saving so it appears with your icons.")}
+          {message || (isMobile ? "Adds AllowanceAI to your phone home screen." : "Choose Desktop when saving so it appears with your icons.")}
         </p>
       )}
       {showMobileHelp && !compact && (
