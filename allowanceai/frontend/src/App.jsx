@@ -8,7 +8,9 @@ import {
   createMonthlyPlan,
   deleteCategory,
   deleteExpense,
+  deleteMyAccount,
   evaluateList,
+  exportMyData,
   getAlerts,
   getBudget,
   getCategories,
@@ -31,7 +33,7 @@ import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.2";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.3";
 
 export default function App() {
   const [budget, setBudget] = useState(null);
@@ -216,6 +218,22 @@ export default function App() {
     await updatePassword(passwords);
   }
 
+  async function handleExportData() {
+    const data = await exportMyData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `allowanceai-data-${user.email}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleDeleteAccount() {
+    await deleteMyAccount();
+    handleLogout();
+  }
+
   if (!authChecked || loading && user) {
     return (
       <SplashScreen />
@@ -280,6 +298,8 @@ export default function App() {
           onUpdateExpense={handleUpdateExpense}
           onUpdatePassword={handleUpdatePassword}
           onUpdateProfile={handleUpdateProfile}
+          onExportData={handleExportData}
+          onDeleteAccount={handleDeleteAccount}
           timetable={timetable}
           user={user}
         />

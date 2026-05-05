@@ -781,6 +781,13 @@ select:focus {
   padding-top: 16px;
 }
 
+.account-danger-zone {
+  border-top: 1px solid #edf1f7;
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+}
+
 .plan-result div {
   align-items: center;
   display: flex;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PasswordInput from "./PasswordInput";
 
-export default function ProfileSettings({ user, onUpdatePassword, onUpdateProfile }) {
+export default function ProfileSettings({ user, onDeleteAccount, onExportData, onUpdatePassword, onUpdateProfile }) {
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [passwords, setPasswords] = useState({ current_password: "", new_password: "" });
   const [message, setMessage] = useState("");
@@ -31,6 +31,33 @@ export default function ProfileSettings({ user, onUpdatePassword, onUpdateProfil
       await onUpdatePassword(passwords);
       setPasswords({ current_password: "", new_password: "" });
       setMessage("Password updated.");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleExportData() {
+    setMessage("");
+    setError("");
+    try {
+      await onExportData();
+      setMessage("Your data export downloaded.");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setMessage("");
+    setError("");
+    const typed = window.prompt("Type DELETE to permanently delete your AllowanceAI account and all your data.");
+    if (typed !== "DELETE") {
+      setError("Account deletion cancelled.");
+      return;
+    }
+
+    try {
+      await onDeleteAccount();
     } catch (err) {
       setError(err.message);
     }
@@ -90,6 +117,16 @@ export default function ProfileSettings({ user, onUpdatePassword, onUpdateProfil
         </label>
         <button className="secondary-button" type="submit">Update Password</button>
       </form>
+
+      <div className="account-danger-zone">
+        <h3>Data Protection</h3>
+        <button className="secondary-button" type="button" onClick={handleExportData}>
+          Export My Data JSON
+        </button>
+        <button className="danger-button" type="button" onClick={handleDeleteAccount}>
+          Delete My Account
+        </button>
+      </div>
     </section>
   );
 }

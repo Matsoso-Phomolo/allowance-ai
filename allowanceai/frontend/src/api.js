@@ -18,18 +18,36 @@ export function getAuthToken() {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+  } catch (error) {
+    if (!navigator.onLine) {
+      throw new Error("You are offline. Reconnect and try again.");
+    }
+    throw new Error("Backend unavailable. Please try again in a moment.");
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(error.detail || "Request failed");
+    if (response.status === 401 && path === "/api/auth/login") {
+      throw new Error("Invalid email or password.");
+    }
+    if (response.status === 401) {
+      setAuthToken("");
+      throw new Error("Your session expired. Please log in again.");
+    }
+    if (response.status === 400 && /email already/i.test(error.detail || "")) {
+      throw new Error("That email is already registered. Use login or another email.");
+    }
+    throw new Error(error.detail || "Request failed. Please check your details and try again.");
   }
 
   return response.json();
@@ -64,6 +82,16 @@ export function updatePassword(data) {
   return request("/api/auth/password", {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+
+export function exportMyData() {
+  return request("/api/account/export");
+}
+
+export function deleteMyAccount() {
+  return request("/api/account", {
+    method: "DELETE",
   });
 }
 

@@ -28,6 +28,8 @@ export default function Dashboard({
   onDeleteExpense,
   onAddExpense,
   onSaveBudget,
+  onDeleteAccount,
+  onExportData,
   onUpdatePassword,
   onUpdateProfile,
   onUpdateCategory,
@@ -57,7 +59,13 @@ export default function Dashboard({
 
         <div className="stack">
           <BudgetForm budget={budget} onSaveBudget={onSaveBudget} />
-          <ProfileSettings user={user} onUpdatePassword={onUpdatePassword} onUpdateProfile={onUpdateProfile} />
+          <ProfileSettings
+            user={user}
+            onDeleteAccount={onDeleteAccount}
+            onExportData={onExportData}
+            onUpdatePassword={onUpdatePassword}
+            onUpdateProfile={onUpdateProfile}
+          />
           <ExpenseForm categories={categories} onAddExpense={onAddExpense} />
           <CanIBuy categories={categories} onCheck={canIBuy} />
           <CategoryForm onAddCategory={onAddCategory} />

@@ -2,6 +2,7 @@ import os
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import auth
@@ -28,6 +29,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 
 def ensure_sqlite_user_schema():
@@ -101,6 +112,12 @@ def health():
     return {"status": "ok", "service": "AllowanceAI backend"}
 
 
+@app.get("/ready")
+def ready(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {"status": "ready", "database": "ok", "service": "AllowanceAI backend"}
+
+
 @app.post("/api/auth/register", response_model=schemas.AuthResponse)
 def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     user = crud.create_user(db, user_data)
@@ -134,6 +151,22 @@ def update_password(
     current_user: models.User = Depends(auth.get_current_user),
 ):
     return crud.update_user_password(db, current_user, password_update)
+
+
+@app.get("/api/account/export")
+def export_account_data(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.export_user_data(db, current_user)
+
+
+@app.delete("/api/account")
+def delete_account(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.delete_user_account(db, current_user)
 
 
 @app.post("/api/budget")

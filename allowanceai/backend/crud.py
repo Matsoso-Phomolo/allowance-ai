@@ -70,6 +70,45 @@ def update_user_password(db: Session, user: models.User, password_update: schema
     return {"message": "Password updated."}
 
 
+def export_user_data(db: Session, user: models.User) -> dict:
+    return {
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+        },
+        "budgets": [
+            {
+                "id": budget.id,
+                "month": budget.month,
+                "allowance": round(budget.allowance, 2),
+                "savings_target": round(budget.savings_target, 2),
+            }
+            for budget in db.query(models.Budget).filter(models.Budget.user_id == user.id).order_by(models.Budget.id.asc()).all()
+        ],
+        "categories": get_categories(db, user),
+        "expenses": get_expenses(db, user),
+        "reports": {
+            "monthly": get_monthly_report(db, user),
+            "intelligence": get_intelligence(db, user),
+            "alerts": get_alerts(db, user),
+        },
+        "behavior_tracking": get_behavior_metrics(db, user),
+    }
+
+
+def delete_user_account(db: Session, user: models.User) -> dict:
+    db.query(models.CategoryDailyTotal).filter(models.CategoryDailyTotal.user_id == user.id).delete()
+    db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id).delete()
+    db.query(models.Expense).filter(models.Expense.user_id == user.id).delete()
+    db.query(models.Category).filter(models.Category.user_id == user.id).delete()
+    db.query(models.Budget).filter(models.Budget.user_id == user.id).delete()
+    db.delete(user)
+    db.commit()
+    return {"message": "Account deleted."}
+
+
 def create_budget(db: Session, budget: schemas.BudgetCreate, user: models.User):
     db_budget = models.Budget(
         month=budget.month,

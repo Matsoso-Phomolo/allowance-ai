@@ -20,9 +20,15 @@ import models
 from database import get_db
 
 
+ENVIRONMENT = os.getenv("ALLOWANCEAI_ENV") or os.getenv("ENVIRONMENT") or os.getenv("RENDER_ENV") or "development"
+IS_PRODUCTION = ENVIRONMENT.strip().lower() in {"production", "prod"} or any(
+    key.startswith("RENDER") for key in os.environ
+)
 SECRET_KEY = os.environ.get("ALLOWANCEAI_SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError("ALLOWANCEAI_SECRET_KEY must be set in the environment.")
+    if IS_PRODUCTION:
+        raise RuntimeError("ALLOWANCEAI_SECRET_KEY must be set in production.")
+    SECRET_KEY = "allowanceai-local-dev-secret-change-me"
 TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7
 security = HTTPBearer()
 

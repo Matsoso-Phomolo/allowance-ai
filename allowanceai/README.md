@@ -115,7 +115,7 @@ Set this frontend environment variable in Render:
 
 ```bash
 VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
-VITE_APP_VERSION=1.0.2
+VITE_APP_VERSION=1.0.3
 ```
 
 ### Android PWA Install
@@ -138,10 +138,10 @@ Before each frontend deployment, bump the version in both places:
 
 ```bash
 # allowanceai/frontend/public/version.json
-{ "version": "1.0.3" }
+{ "version": "1.0.4" }
 
 # Render frontend environment variable
-VITE_APP_VERSION=1.0.3
+VITE_APP_VERSION=1.0.4
 ```
 
 Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so the service worker uses a fresh cache name and removes old caches during activation. The service worker caches the app shell, claims clients after activation, deletes old caches, and serves `offline.html` as a friendly fallback if the user opens the app while offline.
@@ -152,6 +152,35 @@ Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so
 - Copy the Render PostgreSQL `DATABASE_URL` into the backend environment variables.
 - Never commit real database passwords, production database URLs, or production secret keys.
 - Keep local secrets in `backend/.env`; configure production secrets inside Render.
+- Enable Render PostgreSQL backups from the Render dashboard when available for your plan.
+- Before risky production changes, create a manual database backup/export from Render PostgreSQL.
+- Keep exported backups private because they contain personal budget and expense data.
+
+### Production Hardening
+
+AllowanceAI uses these production safety controls:
+
+- `ALLOWANCEAI_SECRET_KEY` is required in production. Local development can use a fallback only when not running in a production/Render environment.
+- Backend responses include basic security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and a minimal `Permissions-Policy`.
+- `/health` confirms the API process is running.
+- `/ready` checks that the backend can query the database.
+- Authenticated users can export their own budgets, categories, expenses, reports, and behavior tracking data as JSON.
+- Authenticated users can delete their own account and user-owned data from Profile Settings.
+
+To export a user's data locally from the backend:
+
+```bash
+cd allowanceai/backend
+set EXPORT_USER_EMAIL=you@example.com
+python export_user_data.py
+```
+
+Optional custom output path:
+
+```bash
+set EXPORT_OUTPUT_PATH=my-allowanceai-backup.json
+python export_user_data.py
+```
 
 ### Copy Local Account Data To Render
 
