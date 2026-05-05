@@ -1,4 +1,5 @@
 import { useState } from "react";
+import InstallButton from "./InstallButton";
 import PasswordInput from "./PasswordInput";
 
 export default function Register({ onRegister, onShowLogin }) {
@@ -54,6 +55,7 @@ export default function Register({ onRegister, onShowLogin }) {
         <button className="secondary-button" type="button" onClick={onShowLogin}>
           Back to Login
         </button>
+        <InstallButton />
         <p className="producer-credit">Produced by Matsoso P</p>
       </section>
     </main>

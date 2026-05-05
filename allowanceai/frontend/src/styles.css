@@ -72,6 +72,14 @@ button:disabled {
   background: #030712;
 }
 
+.install-button {
+  background: #0f766e;
+}
+
+.install-button:hover {
+  background: #115e59;
+}
+
 .app-shell {
   margin: 0 auto;
   max-width: 1240px;

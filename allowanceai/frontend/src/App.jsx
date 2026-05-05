@@ -27,6 +27,7 @@ import {
   updateProfile,
 } from "./api";
 import Dashboard from "./components/Dashboard";
+import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
@@ -190,6 +191,7 @@ export default function App() {
         <p className="header-summary">Monthly allowance, spending, savings, data, mokhatlo, and everyday budget control.</p>
         <div className="user-menu">
           <span>{user.name}</span>
+          <InstallButton compact />
           <button className="logout-button" type="button" onClick={handleLogout}>
             Logout
           </button>

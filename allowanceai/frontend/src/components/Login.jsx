@@ -1,4 +1,5 @@
 import { useState } from "react";
+import InstallButton from "./InstallButton";
 import PasswordInput from "./PasswordInput";
 
 export default function Login({ onLogin, onShowRegister }) {
@@ -44,6 +45,7 @@ export default function Login({ onLogin, onShowRegister }) {
         <button className="secondary-button" type="button" onClick={onShowRegister}>
           Create Account
         </button>
+        <InstallButton />
         <p className="producer-credit">Produced by Matsoso P</p>
       </section>
     </main>
