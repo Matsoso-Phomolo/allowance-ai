@@ -36,7 +36,7 @@ def auth_response(user: models.User) -> dict:
     return {
         "access_token": auth.create_access_token(user),
         "token_type": "bearer",
-        "user": {"id": user.id, "name": user.name, "email": user.email},
+        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role or "user"},
     }
 
 
@@ -58,7 +58,7 @@ def update_user_profile(db: Session, user: models.User, profile: schemas.UserPro
     user.email = email
     db.commit()
     db.refresh(user)
-    return {"id": user.id, "name": user.name, "email": user.email}
+    return {"id": user.id, "name": user.name, "email": user.email, "role": user.role or "user"}
 
 
 def update_user_password(db: Session, user: models.User, password_update: schemas.PasswordUpdate) -> dict:
@@ -483,3 +483,28 @@ def can_i_buy(db: Session, request: schemas.CanIBuyRequest, user: models.User) -
         category_planned=category_info["planned_amount"],
         behavior=get_behavior_metrics(db, user),
     )
+
+
+def get_admin_stats(db: Session) -> dict:
+    total_spending = db.query(func.coalesce(func.sum(models.Expense.amount), 0)).scalar() or 0
+    return {
+        "total_users": db.query(models.User).count(),
+        "total_budgets": db.query(models.Budget).count(),
+        "total_categories": db.query(models.Category).count(),
+        "total_expenses": db.query(models.Expense).count(),
+        "total_tracked_spending": round(total_spending, 2),
+    }
+
+
+def get_admin_users(db: Session) -> list[dict]:
+    users = db.query(models.User).order_by(models.User.created_at.desc(), models.User.id.desc()).all()
+    return [
+        {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role or "user",
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+        }
+        for user in users
+    ]

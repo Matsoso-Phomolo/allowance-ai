@@ -96,6 +96,7 @@ Set these backend environment variables in Render:
 - `DATABASE_URL`
 - `ALLOWANCEAI_SECRET_KEY`
 - `FRONTEND_URL`
+- `ALLOWANCEAI_ADMIN_EMAILS` optional comma-separated admin emails
 
 Use `FRONTEND_URL` for the deployed frontend URL, for example:
 
@@ -115,7 +116,7 @@ Set this frontend environment variable in Render:
 
 ```bash
 VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
-VITE_APP_VERSION=1.0.3
+VITE_APP_VERSION=1.0.4
 ```
 
 ### Android PWA Install
@@ -138,10 +139,10 @@ Before each frontend deployment, bump the version in both places:
 
 ```bash
 # allowanceai/frontend/public/version.json
-{ "version": "1.0.4" }
+{ "version": "1.0.5" }
 
 # Render frontend environment variable
-VITE_APP_VERSION=1.0.4
+VITE_APP_VERSION=1.0.5
 ```
 
 Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so the service worker uses a fresh cache name and removes old caches during activation. The service worker caches the app shell, claims clients after activation, deletes old caches, and serves `offline.html` as a friendly fallback if the user opens the app while offline.
@@ -166,6 +167,16 @@ AllowanceAI uses these production safety controls:
 - `/ready` checks that the backend can query the database.
 - Authenticated users can export their own budgets, categories, expenses, reports, and behavior tracking data as JSON.
 - Authenticated users can delete their own account and user-owned data from Profile Settings.
+- Users have a `role` field of `user` or `admin`. Existing users default to `user`.
+- Admin-only endpoints are protected with 403 responses for normal users.
+- Set `ALLOWANCEAI_ADMIN_EMAILS=admin@example.com,owner@example.com` in the backend environment to backfill those existing accounts as admins on startup.
+- Admins can view system stats, user lists without password hashes, and admin health/readiness from the Admin Dashboard.
+
+Admin endpoints:
+
+- `GET /api/admin/stats`
+- `GET /api/admin/users`
+- `GET /api/admin/health`
 
 To export a user's data locally from the backend:
 

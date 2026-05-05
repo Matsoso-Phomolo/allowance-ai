@@ -1,4 +1,5 @@
 import AlertsPanel from "./AlertsPanel";
+import AdminDashboard from "./AdminDashboard";
 import BudgetCards from "./BudgetCards";
 import BudgetForm from "./BudgetForm";
 import BudgetIntelligence from "./BudgetIntelligence";
@@ -15,6 +16,9 @@ import SpendingTimetable from "./SpendingTimetable";
 
 export default function Dashboard({
   alerts,
+  adminHealth,
+  adminStats,
+  adminUsers,
   budget,
   canIBuy,
   categories,
@@ -40,6 +44,9 @@ export default function Dashboard({
   return (
     <main className="dashboard">
       <BudgetCards budget={budget} />
+      {user?.role === "admin" && (
+        <AdminDashboard health={adminHealth} stats={adminStats} users={adminUsers} />
+      )}
 
       <section className="dashboard-grid">
         <div className="stack">

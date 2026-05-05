@@ -238,6 +238,40 @@ button:disabled {
   font-weight: 800;
 }
 
+.backend-status {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.backend-status::before {
+  border-radius: 999px;
+  content: "";
+  height: 8px;
+  width: 8px;
+}
+
+.backend-status.online {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.backend-status.online::before {
+  background: #16a34a;
+}
+
+.backend-status.offline {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.backend-status.offline::before {
+  background: #dc2626;
+}
+
 .app-footer,
 .producer-credit {
   color: #65748b;
@@ -316,6 +350,48 @@ h3 {
 .dashboard {
   display: grid;
   gap: 20px;
+}
+
+.admin-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-stats div,
+.admin-user-list div {
+  background: #f8fafc;
+  border: 1px solid #e3e8f2;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.admin-stats span,
+.admin-user-list span {
+  color: #65748b;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.admin-stats strong {
+  font-size: 1.1rem;
+}
+
+.admin-users,
+.admin-user-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-user-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .budget-cards {
@@ -919,11 +995,11 @@ select:focus {
   .user-menu {
     align-items: stretch;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .user-menu span {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .auth-panel {
@@ -936,6 +1012,8 @@ select:focus {
   }
 
   .budget-cards,
+  .admin-stats,
+  .admin-user-list,
   .form-row,
   .intelligence-metrics,
   .list-item-row,

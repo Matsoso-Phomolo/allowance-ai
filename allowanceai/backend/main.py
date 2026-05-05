@@ -1,4 +1,5 @@
 import os
+import time
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,7 @@ from database import Base, SessionLocal, engine, get_db
 
 
 app = FastAPI(title="AllowanceAI API", version="1.0.0")
+START_TIME = time.time()
 
 DEFAULT_FRONTEND_ORIGINS = [
     "http://localhost:5173",
@@ -89,10 +91,35 @@ def ensure_sqlite_user_schema():
                 connection.exec_driver_sql(f"DROP TABLE {table_name}")
 
 
+def ensure_user_role_schema():
+    backend = engine.url.get_backend_name()
+    admin_emails = {
+        email.strip().lower()
+        for email in os.getenv("ALLOWANCEAI_ADMIN_EMAILS", "").split(",")
+        if email.strip()
+    }
+
+    with engine.begin() as connection:
+        if backend == "sqlite":
+            table_names = {row[0] for row in connection.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+            if "users" not in table_names:
+                return
+            columns = {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(users)").fetchall()}
+            if "role" not in columns:
+                connection.exec_driver_sql("ALTER TABLE users ADD COLUMN role VARCHAR NOT NULL DEFAULT 'user'")
+        elif "postgresql" in backend:
+            connection.exec_driver_sql("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'user'")
+
+        connection.exec_driver_sql("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
+        for email in admin_emails:
+            connection.execute(text("UPDATE users SET role = 'admin' WHERE lower(email) = :email"), {"email": email})
+
+
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
     ensure_sqlite_user_schema()
+    ensure_user_role_schema()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -118,6 +145,16 @@ def ready(db: Session = Depends(get_db)):
     return {"status": "ready", "database": "ok", "service": "AllowanceAI backend"}
 
 
+def readiness_payload(db: Session) -> dict:
+    db.execute(text("SELECT 1"))
+    return {
+        "status": "ok",
+        "database": "ready",
+        "service": "AllowanceAI backend",
+        "uptime_seconds": round(time.time() - START_TIME, 2),
+    }
+
+
 @app.post("/api/auth/register", response_model=schemas.AuthResponse)
 def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     user = crud.create_user(db, user_data)
@@ -132,7 +169,7 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 
 @app.get("/api/auth/me", response_model=schemas.UserResponse)
 def me(current_user: models.User = Depends(auth.get_current_user)):
-    return {"id": current_user.id, "name": current_user.name, "email": current_user.email}
+    return {"id": current_user.id, "name": current_user.name, "email": current_user.email, "role": current_user.role or "user"}
 
 
 @app.put("/api/auth/profile", response_model=schemas.UserResponse)
@@ -167,6 +204,30 @@ def delete_account(
     current_user: models.User = Depends(auth.get_current_user),
 ):
     return crud.delete_user_account(db, current_user)
+
+
+@app.get("/api/admin/stats")
+def admin_stats(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_admin_user),
+):
+    return crud.get_admin_stats(db)
+
+
+@app.get("/api/admin/users", response_model=list[schemas.AdminUserResponse])
+def admin_users(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_admin_user),
+):
+    return crud.get_admin_users(db)
+
+
+@app.get("/api/admin/health")
+def admin_health(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_admin_user),
+):
+    return readiness_payload(db)
 
 
 @app.post("/api/budget")

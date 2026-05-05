@@ -11,7 +11,11 @@ import {
   deleteMyAccount,
   evaluateList,
   exportMyData,
+  getAdminHealth,
+  getAdminStats,
+  getAdminUsers,
   getAlerts,
+  getBackendHealth,
   getBudget,
   getCategories,
   getExpenses,
@@ -33,7 +37,7 @@ import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.3";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.4";
 
 export default function App() {
   const [budget, setBudget] = useState(null);
@@ -44,6 +48,10 @@ export default function App() {
   const [monthlyReport, setMonthlyReport] = useState(null);
   const [timetable, setTimetable] = useState(null);
   const [error, setError] = useState("");
+  const [adminStats, setAdminStats] = useState(null);
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [adminHealth, setAdminHealth] = useState(null);
+  const [backendReachable, setBackendReachable] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -77,6 +85,28 @@ export default function App() {
     }
   }, []);
 
+  const loadAdminDashboard = useCallback(async () => {
+    if ((user?.role || "user") !== "admin") {
+      setAdminStats(null);
+      setAdminUsers([]);
+      setAdminHealth(null);
+      return;
+    }
+
+    try {
+      const [statsData, usersData, healthData] = await Promise.all([
+        getAdminStats(),
+        getAdminUsers(),
+        getAdminHealth(),
+      ]);
+      setAdminStats(statsData);
+      setAdminUsers(usersData);
+      setAdminHealth(healthData);
+    } catch (err) {
+      setError(err.message);
+    }
+  }, [user]);
+
   useEffect(() => {
     async function restoreSession() {
       if (!getAuthToken()) {
@@ -94,6 +124,30 @@ export default function App() {
       }
     }
     restoreSession();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkBackend() {
+      try {
+        await getBackendHealth();
+        if (!cancelled) {
+          setBackendReachable(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setBackendReachable(false);
+        }
+      }
+    }
+
+    checkBackend();
+    const intervalId = window.setInterval(checkBackend, 60000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   useEffect(() => {
@@ -147,6 +201,12 @@ export default function App() {
     }
   }, [user, loadDashboard]);
 
+  useEffect(() => {
+    if (user?.role === "admin") {
+      loadAdminDashboard();
+    }
+  }, [user, loadAdminDashboard]);
+
   async function handleLogin(credentials) {
     const response = await loginUser(credentials);
     setAuthToken(response.access_token);
@@ -169,6 +229,9 @@ export default function App() {
     setIntelligence(null);
     setMonthlyReport(null);
     setTimetable(null);
+    setAdminStats(null);
+    setAdminUsers([]);
+    setAdminHealth(null);
     setAuthMode("login");
   }
 
@@ -271,6 +334,9 @@ export default function App() {
         <p className="header-summary">Monthly allowance, spending, savings, data, mokhatlo, and everyday budget control.</p>
         <div className="user-menu">
           <span>{user.name}</span>
+          <span className={`backend-status ${backendReachable ? "online" : "offline"}`}>
+            {backendReachable ? "Backend online" : "Backend offline"}
+          </span>
           <InstallButton compact />
           <button className="logout-button" type="button" onClick={handleLogout}>
             Logout
@@ -281,6 +347,9 @@ export default function App() {
       {error && <div className="notice danger">{error}</div>}
       <Dashboard
           alerts={alerts}
+          adminHealth={adminHealth}
+          adminStats={adminStats}
+          adminUsers={adminUsers}
           budget={budget}
           canIBuy={canIBuy}
           categories={categories}

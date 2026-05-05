@@ -44,6 +44,9 @@ async function request(path, options = {}) {
       setAuthToken("");
       throw new Error("Your session expired. Please log in again.");
     }
+    if (response.status === 403) {
+      throw new Error("You do not have permission to access this feature.");
+    }
     if (response.status === 400 && /email already/i.test(error.detail || "")) {
       throw new Error("That email is already registered. Use login or another email.");
     }
@@ -69,6 +72,14 @@ export function loginUser(data) {
 
 export function getMe() {
   return request("/api/auth/me");
+}
+
+export async function getBackendHealth() {
+  const response = await fetch(`${API_BASE_URL}/health`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Backend unavailable.");
+  }
+  return response.json();
 }
 
 export function updateProfile(data) {
@@ -189,4 +200,16 @@ export function canIBuy(data) {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export function getAdminStats() {
+  return request("/api/admin/stats");
+}
+
+export function getAdminUsers() {
+  return request("/api/admin/users");
+}
+
+export function getAdminHealth() {
+  return request("/api/admin/health");
 }

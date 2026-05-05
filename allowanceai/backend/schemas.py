@@ -131,6 +131,15 @@ class UserResponse(BaseModel):
     id: int
     name: str
     email: str
+    role: str = "user"
+
+
+class AdminUserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+    created_at: str | None = None
 
 
 class AuthResponse(BaseModel):
