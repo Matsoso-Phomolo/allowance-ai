@@ -115,7 +115,24 @@ Set this frontend environment variable in Render:
 
 ```bash
 VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
+VITE_APP_VERSION=1.0.0
 ```
+
+### Frontend Auto-Update Versioning
+
+The frontend checks `public/version.json` on app load and every 60 seconds using `cache: "no-store"`. If the deployed `version.json` value is newer or different from the app bundle's `VITE_APP_VERSION`, AllowanceAI shows a small `New update available` banner with a `Reload` button. On the login/register screen only, the app may reload once automatically because there is no active budget form to interrupt.
+
+Before each frontend deployment, bump the version in both places:
+
+```bash
+# allowanceai/frontend/public/version.json
+{ "version": "1.0.1" }
+
+# Render frontend environment variable
+VITE_APP_VERSION=1.0.1
+```
+
+Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so the service worker uses a fresh cache name and removes old caches during activation.
 
 ### PostgreSQL Notes
 

@@ -1,5 +1,6 @@
-const CACHE_NAME = "allowanceai-v2";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icon-192.png", "/icon-512.png"];
+const DEPLOYMENT_VERSION = "1.0.0";
+const CACHE_NAME = `allowanceai-${DEPLOYMENT_VERSION}`;
+const APP_SHELL = ["/", "/manifest.webmanifest", "/version.json", "/icon.svg", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -21,6 +22,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (url.pathname === "/version.json") {
+    event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
 

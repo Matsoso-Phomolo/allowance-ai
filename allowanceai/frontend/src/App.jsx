@@ -31,6 +31,8 @@ import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "dev";
+
 export default function App() {
   const [budget, setBudget] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -44,6 +46,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -89,6 +92,46 @@ export default function App() {
     }
     restoreSession();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkForUpdate() {
+      try {
+        const response = await fetch(`/version.json?ts=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const latestVersion = String(data.version || "").trim();
+        if (!latestVersion || latestVersion === APP_VERSION || cancelled) {
+          return;
+        }
+
+        if (!user) {
+          const reloadKey = `allowanceai_reload_${latestVersion}`;
+          if (!sessionStorage.getItem(reloadKey)) {
+            sessionStorage.setItem(reloadKey, "true");
+            window.location.reload();
+            return;
+          }
+        }
+
+        setUpdateAvailable(true);
+      } catch {
+        // Version checks should never interrupt normal budgeting.
+      }
+    }
+
+    checkForUpdate();
+    const intervalId = window.setInterval(checkForUpdate, 60000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -177,15 +220,21 @@ export default function App() {
   }
 
   if (!user) {
-    return authMode === "register" ? (
-      <Register onRegister={handleRegister} onShowLogin={() => setAuthMode("login")} />
-    ) : (
-      <Login onLogin={handleLogin} onShowRegister={() => setAuthMode("register")} />
+    return (
+      <>
+        {updateAvailable && <UpdateBanner />}
+        {authMode === "register" ? (
+          <Register onRegister={handleRegister} onShowLogin={() => setAuthMode("login")} />
+        ) : (
+          <Login onLogin={handleLogin} onShowRegister={() => setAuthMode("register")} />
+        )}
+      </>
     );
   }
 
   return (
     <div className="app-shell">
+      {updateAvailable && <UpdateBanner />}
       <header className="app-header">
         <div>
           <h1>AllowanceAI</h1>
@@ -224,6 +273,17 @@ export default function App() {
           user={user}
         />
       <footer className="app-footer">AllowanceAI | Produced by Matsoso P</footer>
+    </div>
+  );
+}
+
+function UpdateBanner() {
+  return (
+    <div className="update-banner">
+      <span>New update available</span>
+      <button type="button" onClick={() => window.location.reload()}>
+        Reload
+      </button>
     </div>
   );
 }
