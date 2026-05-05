@@ -12,7 +12,6 @@
 
 body {
   margin: 0;
-  min-width: 320px;
 }
 
 button,
@@ -194,26 +193,32 @@ button:disabled {
 }
 
 .auth-shell {
-  align-items: center;
   display: grid;
+  box-sizing: border-box;
   min-height: 100vh;
-  padding: 24px;
+  padding: clamp(12px, 4vw, 32px);
+  place-items: center;
 }
 
 .auth-panel {
+  box-sizing: border-box;
   display: grid;
   gap: 18px;
   margin: 0 auto;
-  max-width: 460px;
-  width: 100%;
+  max-width: 640px;
+  overflow: hidden;
+  padding: clamp(20px, 5vw, 40px);
+  width: min(100%, 640px);
 }
 
 .panel.auth-panel {
-  border: 8px solid #1d4ed8;
+  border: clamp(5px, 1.2vw, 8px) solid #1d4ed8;
 }
 
 .auth-panel h1 {
-  font-size: 3rem;
+  font-size: clamp(2.4rem, 10vw, 4.5rem);
+  line-height: 1;
+  word-break: break-word;
 }
 
 .eyebrow {
@@ -478,6 +483,7 @@ select {
   background: #f8fafc;
   border: 1px solid #d8e0ec;
   border-radius: 8px;
+  box-sizing: border-box;
   color: #172033;
   min-height: 44px;
   padding: 10px 12px;
