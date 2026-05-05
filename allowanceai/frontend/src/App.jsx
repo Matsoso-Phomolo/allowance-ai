@@ -31,7 +31,7 @@ import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.1";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.2";
 
 export default function App() {
   const [budget, setBudget] = useState(null);

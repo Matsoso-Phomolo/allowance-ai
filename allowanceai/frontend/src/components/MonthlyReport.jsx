@@ -28,6 +28,109 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
+function pdfEscape(value) {
+  return String(value ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("(", "\\(")
+    .replaceAll(")", "\\)");
+}
+
+function wrapText(text, maxLength = 88) {
+  const words = String(text ?? "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxLength && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  });
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines.length ? lines : [""];
+}
+
+function createPdfBlob(title, lines) {
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 48;
+  const lineHeight = 16;
+  const contentHeight = pageHeight - margin * 2;
+  const linesPerPage = Math.floor(contentHeight / lineHeight);
+  const pages = [];
+
+  for (let index = 0; index < lines.length; index += linesPerPage) {
+    pages.push(lines.slice(index, index + linesPerPage));
+  }
+
+  const objects = [];
+
+  function addObject(content) {
+    objects.push(content);
+    return objects.length;
+  }
+
+  const fontObjectId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const pageObjectIds = [];
+
+  pages.forEach((pageLines, pageIndex) => {
+    const text = [
+      "BT",
+      "/F1 11 Tf",
+      `1 0 0 1 ${margin} ${pageHeight - margin} Tm`,
+      "16 TL",
+      pageIndex === 0 ? `/F1 18 Tf (${pdfEscape(title)}) Tj` : `/F1 11 Tf (${pdfEscape(title)} continued) Tj`,
+      "T*",
+      "/F1 11 Tf",
+      ...pageLines.map((line) => `(${pdfEscape(line)}) Tj T*`),
+      "ET",
+    ].join("\n");
+    const streamObjectId = addObject(`<< /Length ${text.length} >>\nstream\n${text}\nendstream`);
+    const pageObjectId = addObject(
+      `<< /Type /Page /Parent 0 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${streamObjectId} 0 R >>`
+    );
+    pageObjectIds.push(pageObjectId);
+  });
+
+  const pagesObjectId = addObject(`<< /Type /Pages /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjectIds.length} >>`);
+  pageObjectIds.forEach((pageObjectId) => {
+    objects[pageObjectId - 1] = objects[pageObjectId - 1].replace("/Parent 0 0 R", `/Parent ${pagesObjectId} 0 R`);
+  });
+  const catalogObjectId = addObject(`<< /Type /Catalog /Pages ${pagesObjectId} 0 R >>`);
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root ${catalogObjectId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+
+  return new Blob([pdf], { type: "application/pdf" });
+}
+
+function downloadPdf(filename, title, lines) {
+  const blob = createPdfBlob(title, lines);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function MonthlyReport({ report }) {
   if (!report) {
     return null;
@@ -75,6 +178,50 @@ export default function MonthlyReport({ report }) {
     ]);
   }
 
+  function exportReportPdf() {
+    const lines = [
+      `Generated: ${new Date().toLocaleString()}`,
+      "",
+      "Monthly Summary",
+      `Allowance: ${money(report.allowance)}`,
+      `Total spent: ${money(report.total_spent)}`,
+      `Remaining money: ${money(report.remaining_money)}`,
+      `Savings target: ${money(report.savings_target)}`,
+      `Risk score: ${report.risk_score}/100`,
+      `Budget health: ${report.budget_health}`,
+      "",
+      "AI Final Verdict",
+      ...wrapText(report.final_verdict),
+      ...(report.decision?.reasoning ? wrapText(report.decision.reasoning) : []),
+      "",
+      "Category Breakdown",
+      ...report.category_summary.flatMap((category) =>
+        wrapText(
+          `${category.name}: planned ${money(category.planned_amount)}, spent ${money(category.spent_amount)}, remaining ${money(category.remaining_amount)}, status ${category.status}.`
+        )
+      ),
+      "",
+      "Top Expenses",
+      ...(report.top_expenses.length
+        ? report.top_expenses.flatMap((expense) =>
+            wrapText(`${expense.item_name} - ${expense.category_name} - ${money(expense.amount)} - ${expense.expense_date}`)
+          )
+        : ["No expenses yet."]),
+      "",
+      "Danger / Warning Categories",
+      ...(report.overspending_categories.length
+        ? report.overspending_categories.flatMap((category) =>
+            wrapText(`${category.name} - ${category.status} - ${money(category.remaining_amount)} left`)
+          )
+        : ["No warning categories."]),
+      "",
+      "AI Recommendations",
+      ...report.recommendations.flatMap((recommendation) => wrapText(`- ${recommendation}`)),
+    ];
+
+    downloadPdf("allowanceai-monthly-report.pdf", "AllowanceAI Monthly Report", lines);
+  }
+
   return (
     <section className="panel monthly-report">
       <div className="panel-heading">
@@ -83,8 +230,8 @@ export default function MonthlyReport({ report }) {
       </div>
 
       <div className="report-actions">
-        <button className="secondary-button" type="button" onClick={() => window.print()}>
-          Print Report
+        <button className="secondary-button" type="button" onClick={exportReportPdf}>
+          Print Report PDF
         </button>
         <button className="secondary-button" type="button" onClick={exportExpenses}>
           Export Expenses CSV
