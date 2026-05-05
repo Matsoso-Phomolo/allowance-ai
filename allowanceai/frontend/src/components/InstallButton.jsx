@@ -1,54 +1,32 @@
-import { useEffect, useState } from "react";
-
 export default function InstallButton({ compact = false }) {
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [installed, setInstalled] = useState(false);
+  function handleDownload() {
+    const appUrl =
+      window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "https://allowance-ai.onrender.com/"
+        : window.location.origin;
+    const shortcut = `[InternetShortcut]\nURL=${appUrl}\nIconFile=${appUrl}/icon.svg\nIconIndex=0\n`;
+    const blob = new Blob([shortcut], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone;
-
-    if (isStandalone) {
-      setInstalled(true);
-      return undefined;
-    }
-
-    function handleBeforeInstallPrompt(event) {
-      event.preventDefault();
-      setInstallPrompt(event);
-    }
-
-    function handleInstalled() {
-      setInstalled(true);
-      setInstallPrompt(null);
-    }
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleInstalled);
-    };
-  }, []);
-
-  async function handleInstall() {
-    if (!installPrompt) {
-      return;
-    }
-
-    await installPrompt.prompt();
-    await installPrompt.userChoice;
-    setInstallPrompt(null);
-  }
-
-  if (installed || !installPrompt) {
-    return null;
+    link.href = url;
+    link.download = "AllowanceAI.url";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   return (
-    <button className={compact ? "install-button compact-button" : "install-button"} type="button" onClick={handleInstall}>
-      Install App
-    </button>
+    <div className={compact ? "install-control compact-install-control" : "install-control"}>
+      <button
+        className={compact ? "install-button compact-button" : "install-button"}
+        type="button"
+        onClick={handleDownload}
+      >
+        Download App
+      </button>
+      {!compact && <p className="install-message">Downloads a desktop shortcut for AllowanceAI.</p>}
+    </div>
   );
 }

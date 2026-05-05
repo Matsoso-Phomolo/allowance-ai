@@ -80,6 +80,23 @@ button:disabled {
   background: #115e59;
 }
 
+.install-control {
+  display: grid;
+  gap: 8px;
+}
+
+.compact-install-control {
+  display: inline-flex;
+}
+
+.install-message {
+  color: #526079;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}
+
 .app-shell {
   margin: 0 auto;
   max-width: 1240px;
