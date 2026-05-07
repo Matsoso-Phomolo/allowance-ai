@@ -206,6 +206,40 @@ def delete_account(
     return crud.delete_user_account(db, current_user)
 
 
+@app.get("/api/notifications", response_model=list[schemas.NotificationResponse])
+def get_notifications(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.get_notifications(db, current_user)
+
+
+@app.patch("/api/notifications/read-all")
+def mark_all_notifications_read(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.mark_all_notifications_read(db, current_user)
+
+
+@app.patch("/api/notifications/{notification_id}/read", response_model=schemas.NotificationResponse)
+def mark_notification_read(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.mark_notification_read(db, notification_id, current_user)
+
+
+@app.delete("/api/notifications/{notification_id}")
+def delete_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.delete_notification(db, notification_id, current_user)
+
+
 @app.get("/api/admin/stats")
 def admin_stats(
     db: Session = Depends(get_db),
@@ -318,6 +352,11 @@ def get_alerts(db: Session = Depends(get_db), current_user: models.User = Depend
 @app.get("/api/intelligence")
 def get_intelligence(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     return crud.get_intelligence(db, current_user)
+
+
+@app.get("/api/insights/monthly")
+def get_monthly_insights(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
+    return crud.get_monthly_insights(db, current_user)
 
 
 @app.post("/api/monthly-plan")

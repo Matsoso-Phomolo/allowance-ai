@@ -9,6 +9,7 @@ import {
   deleteCategory,
   deleteExpense,
   deleteMyAccount,
+  deleteNotification,
   evaluateList,
   exportMyData,
   getAdminHealth,
@@ -20,11 +21,15 @@ import {
   getCategories,
   getExpenses,
   getIntelligence,
+  getMonthlyInsights,
   getMonthlyReport,
+  getNotifications,
   getTimetable,
   getAuthToken,
   getMe,
   loginUser,
+  markAllNotificationsRead,
+  markNotificationRead,
   registerUser,
   setAuthToken,
   updateCategory,
@@ -33,11 +38,11 @@ import {
   updateProfile,
 } from "./api";
 import Dashboard from "./components/Dashboard";
-import InstallButton from "./components/InstallButton";
 import Login from "./components/Login";
+import NotificationCenter from "./components/NotificationCenter";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.5";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.6";
 
 export default function App() {
   const [budget, setBudget] = useState(null);
@@ -46,11 +51,13 @@ export default function App() {
   const [alerts, setAlerts] = useState([]);
   const [intelligence, setIntelligence] = useState(null);
   const [monthlyReport, setMonthlyReport] = useState(null);
+  const [monthlyInsights, setMonthlyInsights] = useState(null);
   const [timetable, setTimetable] = useState(null);
   const [error, setError] = useState("");
   const [adminStats, setAdminStats] = useState(null);
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminHealth, setAdminHealth] = useState(null);
+  const [notifications, setNotifications] = useState([]);
   const [backendReachable, setBackendReachable] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [user, setUser] = useState(null);
@@ -62,7 +69,17 @@ export default function App() {
   const loadDashboard = useCallback(async () => {
     try {
       setError("");
-      const [budgetData, categoryData, expenseData, alertData, intelligenceData, timetableData, reportData] = await Promise.all([
+      const [
+        budgetData,
+        categoryData,
+        expenseData,
+        alertData,
+        intelligenceData,
+        timetableData,
+        reportData,
+        insightsData,
+        notificationData,
+      ] = await Promise.all([
         getBudget(),
         getCategories(),
         getExpenses(),
@@ -70,6 +87,8 @@ export default function App() {
         getIntelligence(),
         getTimetable(),
         getMonthlyReport(),
+        getMonthlyInsights(),
+        getNotifications(),
       ]);
       setBudget(budgetData);
       setCategories(categoryData);
@@ -78,12 +97,26 @@ export default function App() {
       setIntelligence(intelligenceData);
       setTimetable(timetableData);
       setMonthlyReport(reportData);
+      setMonthlyInsights(insightsData);
+      setNotifications(notificationData);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const loadNotifications = useCallback(async () => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      setNotifications(await getNotifications());
+    } catch {
+      // Notification refresh should not interrupt budgeting work.
+    }
+  }, [user]);
 
   const loadAdminDashboard = useCallback(async () => {
     if ((user?.role || "user") !== "admin") {
@@ -207,6 +240,14 @@ export default function App() {
     }
   }, [user, loadAdminDashboard]);
 
+  useEffect(() => {
+    if (!user) {
+      return undefined;
+    }
+    const intervalId = window.setInterval(loadNotifications, 60000);
+    return () => window.clearInterval(intervalId);
+  }, [user, loadNotifications]);
+
   async function handleLogin(credentials) {
     const response = await loginUser(credentials);
     setAuthToken(response.access_token);
@@ -228,10 +269,12 @@ export default function App() {
     setAlerts([]);
     setIntelligence(null);
     setMonthlyReport(null);
+    setMonthlyInsights(null);
     setTimetable(null);
     setAdminStats(null);
     setAdminUsers([]);
     setAdminHealth(null);
+    setNotifications([]);
     setAuthMode("login");
   }
 
@@ -297,6 +340,23 @@ export default function App() {
     handleLogout();
   }
 
+  async function handleMarkNotificationRead(id) {
+    const updated = await markNotificationRead(id);
+    setNotifications((current) => current.map((notification) => (
+      notification.id === id ? updated : notification
+    )));
+  }
+
+  async function handleMarkAllNotificationsRead() {
+    await markAllNotificationsRead();
+    setNotifications((current) => current.map((notification) => ({ ...notification, is_read: true })));
+  }
+
+  async function handleDeleteNotification(id) {
+    await deleteNotification(id);
+    setNotifications((current) => current.filter((notification) => notification.id !== id));
+  }
+
   if (!authChecked || loading && user) {
     return (
       <SplashScreen />
@@ -334,10 +394,12 @@ export default function App() {
         <p className="header-summary">Monthly allowance, spending, savings, data, mokhatlo, and everyday budget control.</p>
         <div className="user-menu">
           <span>{user.name}</span>
-          <span className={`backend-status ${backendReachable ? "online" : "offline"}`}>
-            {backendReachable ? "Backend online" : "Backend offline"}
-          </span>
-          <InstallButton compact />
+          <NotificationCenter
+            notifications={notifications}
+            onDelete={handleDeleteNotification}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            onMarkRead={handleMarkNotificationRead}
+          />
           <button className="logout-button" type="button" onClick={handleLogout}>
             Logout
           </button>
@@ -358,6 +420,7 @@ export default function App() {
           expenses={expenses}
           intelligence={intelligence}
           monthlyReport={monthlyReport}
+          monthlyInsights={monthlyInsights}
           onAddCategory={handleAddCategory}
           onDeleteCategory={handleDeleteCategory}
           onDeleteExpense={handleDeleteExpense}

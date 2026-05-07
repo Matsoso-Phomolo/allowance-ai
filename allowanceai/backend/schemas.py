@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import AliasChoices, BaseModel, Field
@@ -140,6 +140,18 @@ class AdminUserResponse(BaseModel):
     email: str
     role: str
     created_at: str | None = None
+
+
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: str
+    type: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class AuthResponse(BaseModel):

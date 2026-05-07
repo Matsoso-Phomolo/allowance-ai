@@ -173,6 +173,10 @@ export function getIntelligence() {
   return request("/api/intelligence");
 }
 
+export function getMonthlyInsights() {
+  return request("/api/insights/monthly");
+}
+
 export function getTimetable() {
   return request("/api/timetable");
 }
@@ -212,4 +216,26 @@ export function getAdminUsers() {
 
 export function getAdminHealth() {
   return request("/api/admin/health");
+}
+
+export function getNotifications() {
+  return request("/api/notifications");
+}
+
+export function markNotificationRead(id) {
+  return request(`/api/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+}
+
+export function markAllNotificationsRead() {
+  return request("/api/notifications/read-all", {
+    method: "PATCH",
+  });
+}
+
+export function deleteNotification(id) {
+  return request(`/api/notifications/${id}`, {
+    method: "DELETE",
+  });
 }

@@ -116,7 +116,7 @@ Set this frontend environment variable in Render:
 
 ```bash
 VITE_API_BASE_URL=https://allowanceai-backend.onrender.com
-VITE_APP_VERSION=1.0.5
+VITE_APP_VERSION=1.0.6
 ```
 
 ### Android PWA Install
@@ -139,10 +139,10 @@ Before each frontend deployment, bump the version in both places:
 
 ```bash
 # allowanceai/frontend/public/version.json
-{ "version": "1.0.6" }
+{ "version": "1.0.7" }
 
 # Render frontend environment variable
-VITE_APP_VERSION=1.0.6
+VITE_APP_VERSION=1.0.7
 ```
 
 Also update `DEPLOYMENT_VERSION` in `frontend/public/sw.js` to the same value so the service worker uses a fresh cache name and removes old caches during activation. The service worker caches the app shell, claims clients after activation, deletes old caches, and serves `offline.html` as a friendly fallback if the user opens the app while offline.
@@ -171,6 +171,8 @@ AllowanceAI uses these production safety controls:
 - Admin-only endpoints are protected with 403 responses for normal users.
 - Set `ALLOWANCEAI_ADMIN_EMAILS=admin@example.com,owner@example.com` in the backend environment to backfill those existing accounts as admins on startup.
 - Admins can view system stats, user lists without password hashes, and admin health/readiness from the Admin Dashboard.
+- Authenticated users get an in-app Notification Center for budget reminders such as category overspending, fast snack usage, low remaining balance, month-end danger, and savings target progress. Notifications are user-specific, protected by auth, and can be marked read or cleared.
+- Phone push notifications are not enabled yet. The current reminder system is in-app only and is ready for a future push/SMS/email layer.
 
 Admin endpoints:
 
