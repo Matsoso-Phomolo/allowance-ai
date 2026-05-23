@@ -199,6 +199,34 @@ export function evaluateList(data) {
   });
 }
 
+export function getShoppingLists() {
+  return request("/api/shopping-lists");
+}
+
+export function getShoppingList(id) {
+  return request(`/api/shopping-lists/${id}`);
+}
+
+export function createShoppingList(data) {
+  return request("/api/shopping-lists", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateShoppingList(id, data) {
+  return request(`/api/shopping-lists/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteShoppingList(id) {
+  return request(`/api/shopping-lists/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export function canIBuy(data) {
   return request("/api/can-i-buy", {
     method: "POST",

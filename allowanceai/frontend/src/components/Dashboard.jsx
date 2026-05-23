@@ -35,7 +35,9 @@ export default function Dashboard({
   onAddCategory,
   onDeleteCategory,
   onDeleteExpense,
+  onDeleteShoppingList,
   onAddExpense,
+  onSaveShoppingList,
   onSaveBudget,
   onDeleteAccount,
   onExportData,
@@ -43,6 +45,8 @@ export default function Dashboard({
   onUpdateProfile,
   onUpdateCategory,
   onUpdateExpense,
+  onUpdateShoppingList,
+  savedShoppingLists,
   timetable,
   user,
 }) {
@@ -162,7 +166,14 @@ export default function Dashboard({
       summary: "Check several purchases at once.",
       content: (
         <Suspense fallback={<SectionSkeleton title="Loading evaluator" />}>
-          <ShoppingListEvaluator categories={categories} onEvaluate={evaluateList} />
+          <ShoppingListEvaluator
+            categories={categories}
+            onDeleteShoppingList={onDeleteShoppingList}
+            onEvaluate={evaluateList}
+            onSaveShoppingList={onSaveShoppingList}
+            onUpdateShoppingList={onUpdateShoppingList}
+            savedShoppingLists={savedShoppingLists}
+          />
         </Suspense>
       ),
     },

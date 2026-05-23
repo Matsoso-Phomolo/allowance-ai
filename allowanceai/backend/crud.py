@@ -493,11 +493,16 @@ def export_user_data(db: Session, user: models.User) -> dict:
             "alerts": get_alerts(db, user),
         },
         "behavior_tracking": get_behavior_metrics(db, user),
+        "saved_shopping_lists": get_shopping_lists(db, user),
         "notifications": get_notifications(db, user),
     }
 
 
 def delete_user_account(db: Session, user: models.User) -> dict:
+    shopping_list_ids = [row[0] for row in db.query(models.ShoppingList.id).filter(models.ShoppingList.user_id == user.id).all()]
+    if shopping_list_ids:
+        db.query(models.ShoppingListItem).filter(models.ShoppingListItem.shopping_list_id.in_(shopping_list_ids)).delete(synchronize_session=False)
+        db.query(models.ShoppingList).filter(models.ShoppingList.id.in_(shopping_list_ids)).delete(synchronize_session=False)
     db.query(models.CategoryDailyTotal).filter(models.CategoryDailyTotal.user_id == user.id).delete()
     db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id).delete()
     db.query(models.Notification).filter(models.Notification.user_id == user.id).delete()
@@ -901,6 +906,116 @@ def evaluate_shopping_list(db: Session, request: schemas.ShoppingListRequest, us
         get_categories(db, user),
         behavior=get_behavior_metrics(db, user),
     )
+
+
+def evaluate_shopping_list_items(db: Session, user: models.User, items: list[dict]) -> dict:
+    return decision_engine.evaluate_shopping_list(
+        items,
+        get_budget_summary(db, user),
+        get_categories(db, user),
+        behavior=get_behavior_metrics(db, user),
+    )
+
+
+def serialize_shopping_list(shopping_list: models.ShoppingList) -> dict:
+    return {
+        "id": shopping_list.id,
+        "name": shopping_list.name,
+        "total_cost": round(shopping_list.total_cost, 2),
+        "approved": bool(shopping_list.approved),
+        "advice": shopping_list.advice,
+        "created_at": shopping_list.created_at,
+        "updated_at": shopping_list.updated_at,
+        "items": [
+            {
+                "id": item.id,
+                "item_name": item.item_name,
+                "amount": round(item.amount, 2),
+                "category_name": item.category_name,
+                "created_at": item.created_at,
+            }
+            for item in sorted(shopping_list.items, key=lambda row: row.id)
+        ],
+    }
+
+
+def get_shopping_list_by_id(db: Session, list_id: int, user: models.User) -> models.ShoppingList:
+    shopping_list = (
+        db.query(models.ShoppingList)
+        .filter(models.ShoppingList.id == list_id, models.ShoppingList.user_id == user.id)
+        .first()
+    )
+    if not shopping_list:
+        raise HTTPException(status_code=404, detail="Shopping list not found.")
+    return shopping_list
+
+
+def get_shopping_lists(db: Session, user: models.User) -> list[dict]:
+    shopping_lists = (
+        db.query(models.ShoppingList)
+        .filter(models.ShoppingList.user_id == user.id)
+        .order_by(models.ShoppingList.updated_at.desc(), models.ShoppingList.id.desc())
+        .all()
+    )
+    return [serialize_shopping_list(shopping_list) for shopping_list in shopping_lists]
+
+
+def create_shopping_list(db: Session, request: schemas.ShoppingListCreate, user: models.User) -> dict:
+    items = [item.model_dump() for item in request.items]
+    evaluation = evaluate_shopping_list_items(db, user, items)
+    shopping_list = models.ShoppingList(
+        user_id=user.id,
+        name=request.name.strip() or "Shopping list",
+        total_cost=evaluation["total_cost"],
+        approved=evaluation["approved"],
+        advice=evaluation["advice"],
+    )
+    shopping_list.items = [
+        models.ShoppingListItem(
+            item_name=item["item_name"].strip(),
+            amount=item["amount"],
+            category_name=item["category_name"].strip(),
+        )
+        for item in items
+    ]
+    db.add(shopping_list)
+    db.commit()
+    db.refresh(shopping_list)
+    create_notification(db, user, "Shopping list saved", "Shopping list saved successfully.", "success")
+    return serialize_shopping_list(shopping_list)
+
+
+def update_shopping_list(db: Session, list_id: int, request: schemas.ShoppingListUpdate, user: models.User) -> dict:
+    shopping_list = get_shopping_list_by_id(db, list_id, user)
+    if request.name is not None:
+        shopping_list.name = request.name.strip() or shopping_list.name
+
+    if request.items is not None:
+        items = [item.model_dump() for item in request.items]
+        evaluation = evaluate_shopping_list_items(db, user, items)
+        shopping_list.total_cost = evaluation["total_cost"]
+        shopping_list.approved = evaluation["approved"]
+        shopping_list.advice = evaluation["advice"]
+        shopping_list.items = [
+            models.ShoppingListItem(
+                item_name=item["item_name"].strip(),
+                amount=item["amount"],
+                category_name=item["category_name"].strip(),
+            )
+            for item in items
+        ]
+
+    shopping_list.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(shopping_list)
+    return serialize_shopping_list(shopping_list)
+
+
+def delete_shopping_list(db: Session, list_id: int, user: models.User) -> dict:
+    shopping_list = get_shopping_list_by_id(db, list_id, user)
+    db.delete(shopping_list)
+    db.commit()
+    return {"message": "Shopping list deleted."}
 
 
 def get_timetable(db: Session, user: models.User) -> dict:

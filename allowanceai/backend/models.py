@@ -39,6 +39,34 @@ class Expense(Base):
     category = relationship("Category", back_populates="expenses")
 
 
+class ShoppingList(Base):
+    __tablename__ = "shopping_lists"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    total_cost = Column(Float, nullable=False, default=0)
+    approved = Column(Boolean, nullable=False, default=False)
+    advice = Column(String, nullable=False, default="")
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    items = relationship("ShoppingListItem", back_populates="shopping_list", cascade="all, delete-orphan")
+
+
+class ShoppingListItem(Base):
+    __tablename__ = "shopping_list_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shopping_list_id = Column(Integer, ForeignKey("shopping_lists.id"), nullable=False, index=True)
+    item_name = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    category_name = Column(String, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    shopping_list = relationship("ShoppingList", back_populates="items")
+
+
 class DailySpendingLog(Base):
     __tablename__ = "daily_spending_log"
 

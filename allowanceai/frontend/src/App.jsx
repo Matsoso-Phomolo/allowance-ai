@@ -6,10 +6,12 @@ import {
   createBudget,
   createCategory,
   createMonthlyPlan,
+  createShoppingList,
   deleteCategory,
   deleteExpense,
   deleteMyAccount,
   deleteNotification,
+  deleteShoppingList,
   evaluateList,
   exportMyData,
   getAdminHealth,
@@ -24,6 +26,7 @@ import {
   getMonthlyInsights,
   getMonthlyReport,
   getNotifications,
+  getShoppingLists,
   getTimetable,
   getAuthToken,
   getMe,
@@ -36,13 +39,14 @@ import {
   updateExpense,
   updatePassword,
   updateProfile,
+  updateShoppingList,
 } from "./api";
 import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
 import NotificationCenter from "./components/NotificationCenter";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.6";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.7";
 
 export default function App() {
   const [budget, setBudget] = useState(null);
@@ -52,6 +56,7 @@ export default function App() {
   const [intelligence, setIntelligence] = useState(null);
   const [monthlyReport, setMonthlyReport] = useState(null);
   const [monthlyInsights, setMonthlyInsights] = useState(null);
+  const [savedShoppingLists, setSavedShoppingLists] = useState([]);
   const [timetable, setTimetable] = useState(null);
   const [error, setError] = useState("");
   const [adminStats, setAdminStats] = useState(null);
@@ -78,6 +83,7 @@ export default function App() {
         timetableData,
         reportData,
         insightsData,
+        shoppingListData,
         notificationData,
       ] = await Promise.all([
         getBudget(),
@@ -88,6 +94,7 @@ export default function App() {
         getTimetable(),
         getMonthlyReport(),
         getMonthlyInsights(),
+        getShoppingLists(),
         getNotifications(),
       ]);
       setBudget(budgetData);
@@ -98,6 +105,7 @@ export default function App() {
       setTimetable(timetableData);
       setMonthlyReport(reportData);
       setMonthlyInsights(insightsData);
+      setSavedShoppingLists(shoppingListData);
       setNotifications(notificationData);
     } catch (err) {
       setError(err.message);
@@ -270,6 +278,7 @@ export default function App() {
     setIntelligence(null);
     setMonthlyReport(null);
     setMonthlyInsights(null);
+    setSavedShoppingLists([]);
     setTimetable(null);
     setAdminStats(null);
     setAdminUsers([]);
@@ -357,6 +366,24 @@ export default function App() {
     setNotifications((current) => current.filter((notification) => notification.id !== id));
   }
 
+  async function handleSaveShoppingList(data) {
+    const saved = await createShoppingList(data);
+    setSavedShoppingLists((current) => [saved, ...current.filter((list) => list.id !== saved.id)]);
+    await loadNotifications();
+    return saved;
+  }
+
+  async function handleUpdateShoppingList(id, data) {
+    const updated = await updateShoppingList(id, data);
+    setSavedShoppingLists((current) => current.map((list) => (list.id === id ? updated : list)));
+    return updated;
+  }
+
+  async function handleDeleteShoppingList(id) {
+    await deleteShoppingList(id);
+    setSavedShoppingLists((current) => current.filter((list) => list.id !== id));
+  }
+
   if (!authChecked || loading && user) {
     return (
       <SplashScreen />
@@ -424,14 +451,18 @@ export default function App() {
           onAddCategory={handleAddCategory}
           onDeleteCategory={handleDeleteCategory}
           onDeleteExpense={handleDeleteExpense}
+          onDeleteShoppingList={handleDeleteShoppingList}
           onAddExpense={handleAddExpense}
+          onSaveShoppingList={handleSaveShoppingList}
           onSaveBudget={handleSaveBudget}
           onUpdateCategory={handleUpdateCategory}
           onUpdateExpense={handleUpdateExpense}
+          onUpdateShoppingList={handleUpdateShoppingList}
           onUpdatePassword={handleUpdatePassword}
           onUpdateProfile={handleUpdateProfile}
           onExportData={handleExportData}
           onDeleteAccount={handleDeleteAccount}
+          savedShoppingLists={savedShoppingLists}
           timetable={timetable}
           user={user}
         />

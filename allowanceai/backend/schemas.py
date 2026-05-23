@@ -106,6 +106,47 @@ class ShoppingListRequest(BaseModel):
     items: list[ShoppingListItem]
 
 
+class ShoppingListItemCreate(BaseModel):
+    item_name: str = Field(..., min_length=1)
+    amount: float = Field(..., gt=0)
+    category_name: str = Field(..., min_length=1)
+
+
+class ShoppingListItemResponse(BaseModel):
+    id: int
+    item_name: str
+    amount: float
+    category_name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ShoppingListCreate(BaseModel):
+    name: str = Field(..., min_length=1)
+    items: list[ShoppingListItemCreate] = Field(..., min_length=1)
+
+
+class ShoppingListUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1)
+    items: list[ShoppingListItemCreate] | None = Field(None, min_length=1)
+
+
+class ShoppingListResponse(BaseModel):
+    id: int
+    name: str
+    total_cost: float
+    approved: bool
+    advice: str
+    created_at: datetime
+    updated_at: datetime
+    items: list[ShoppingListItemResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=1)
     email: str = Field(..., min_length=3)

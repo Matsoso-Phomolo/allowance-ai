@@ -377,6 +377,51 @@ def evaluate_shopping_list(
     return crud.evaluate_shopping_list(db, request, current_user)
 
 
+@app.post("/api/shopping-lists", response_model=schemas.ShoppingListResponse)
+def create_shopping_list(
+    request: schemas.ShoppingListCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.create_shopping_list(db, request, current_user)
+
+
+@app.get("/api/shopping-lists", response_model=list[schemas.ShoppingListResponse])
+def get_shopping_lists(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.get_shopping_lists(db, current_user)
+
+
+@app.get("/api/shopping-lists/{list_id}", response_model=schemas.ShoppingListResponse)
+def get_shopping_list(
+    list_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.serialize_shopping_list(crud.get_shopping_list_by_id(db, list_id, current_user))
+
+
+@app.patch("/api/shopping-lists/{list_id}", response_model=schemas.ShoppingListResponse)
+def update_shopping_list(
+    list_id: int,
+    request: schemas.ShoppingListUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.update_shopping_list(db, list_id, request, current_user)
+
+
+@app.delete("/api/shopping-lists/{list_id}")
+def delete_shopping_list(
+    list_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user),
+):
+    return crud.delete_shopping_list(db, list_id, current_user)
+
+
 @app.get("/api/timetable")
 def get_timetable(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
     return crud.get_timetable(db, current_user)

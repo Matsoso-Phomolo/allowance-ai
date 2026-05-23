@@ -1147,6 +1147,95 @@ select:focus {
   padding: 10px;
 }
 
+.shopping-list-workspace {
+  gap: 18px;
+}
+
+.shopping-list-form {
+  border-bottom: 1px solid #edf1f7;
+  padding-bottom: 16px;
+}
+
+.shopping-list-actions,
+.saved-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.shopping-list-actions button,
+.saved-list-actions button {
+  min-height: 48px;
+}
+
+.shopping-result {
+  gap: 12px;
+}
+
+.shopping-result-heading {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.shopping-result-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shopping-result-grid span,
+.saved-list-meta {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.saved-shopping-lists {
+  display: grid;
+  gap: 12px;
+}
+
+.saved-shopping-lists .panel-heading {
+  margin-bottom: 0;
+}
+
+.saved-list-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.saved-list-card {
+  border: 1px solid #e3e8f2;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.saved-list-card-header {
+  align-items: start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.saved-list-card-header div,
+.saved-list-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.saved-list-card-header span,
+.saved-list-meta span,
+.saved-list-card p {
+  color: #65748b;
+  font-size: 0.86rem;
+}
+
 .compact-button {
   min-height: 48px;
   padding: 0 12px;
@@ -1390,6 +1479,8 @@ select:focus {
   .behavior-rule-grid,
   .insight-card-grid,
   .list-item-row,
+  .saved-list-grid,
+  .shopping-result-grid,
   .week-grid,
   .report-summary,
   .report-grid {
@@ -1401,6 +1492,7 @@ select:focus {
   .expense-main,
   .category-meta,
   .category-footer,
+  .saved-list-card-header,
   .survival-row,
   .plan-result div {
     align-items: stretch;
