@@ -48,7 +48,7 @@ export default function Login({ onLogin, onShowRegister, offlineNotice, updateNo
           Create Account
         </button>
         <InstallButton />
-        <p className="producer-credit">Produced by Mohapi Ndeye</p>
+        <p className="producer-credit">Produced by Matsoso P and Mohapi N</p>
       </section>
     </main>
   );
