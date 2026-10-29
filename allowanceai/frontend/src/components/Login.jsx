@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import InstallButton from "./InstallButton";
 import PasswordInput from "./PasswordInput";
 
 export default function Login({
@@ -76,10 +75,6 @@ export default function Login({
         >
           Create Account
         </button>
-        <InstallButton />
-        <p className="producer-credit">
-          Independently developed by Matsoso Phomolo
-        </p>
       </section>
     </main>
   );

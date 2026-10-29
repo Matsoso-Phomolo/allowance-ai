@@ -1,3 +1,4 @@
+import { PWAInstallAction } from "./components/PWAInstallPrompt";
 import { getDisplayCurrency, saveDisplayCurrency } from "./currency";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import PublicSite from "./components/PublicSite";
@@ -485,6 +486,7 @@ export default function App() {
         <div className="user-menu">
           <Link to="/">Home</Link>
           <Link to="/help">Help</Link>
+          <PWAInstallAction />
           <span>{user.name}</span>
           <label className="currency-control">
             Display currency

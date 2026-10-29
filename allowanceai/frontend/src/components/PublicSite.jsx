@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import BudgetCards from "./BudgetCards";
-import InstallButton from "./InstallButton";
+import { PWAInstallAction } from "./PWAInstallPrompt";
 const features = [
   [
     "01",
@@ -140,6 +140,7 @@ export default function PublicSite({ user, onLogout }) {
               {label}
             </NavLink>
           ))}
+          <PWAInstallAction />
           {user ? (
             <>
               <Link className="button-link" to="/app">
@@ -359,7 +360,7 @@ export default function PublicSite({ user, onLogout }) {
                   install button or browser menu. Installation availability
                   depends on your browser.
                 </p>
-                <InstallButton />
+                <PWAInstallAction className="secondary-button" />
                 <p>
                   Installed apps launch the public homepage. Open Dashboard to
                   access your workspace. Offline access is limited to cached

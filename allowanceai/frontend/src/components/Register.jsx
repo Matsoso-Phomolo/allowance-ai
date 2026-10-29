@@ -87,9 +87,6 @@ export default function Register({
         >
           Back to Login
         </button>
-        <p className="producer-credit">
-          Independently developed by Matsoso Phomolo
-        </p>
       </section>
     </main>
   );

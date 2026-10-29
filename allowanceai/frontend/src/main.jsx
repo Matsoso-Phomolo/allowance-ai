@@ -2,13 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import { BrowserRouter } from "react-router-dom";
+import { PWAInstallProvider } from "./components/PWAInstallPrompt";
 import App from "./App.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <PWAInstallProvider>
+        <App />
+      </PWAInstallProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );
