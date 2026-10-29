@@ -27,6 +27,7 @@ Public-first AllowanceAI experience with independent Matsoso Phomolo attribution
 - frontend/src/components/InstallButton.jsx: browser install prompt/guidance replaces HTML launcher downloads.
 - frontend/src/styles.css: public design system, desktop app navigation, mobile layout, focus states and reduced motion.
 - frontend/index.html: page description/title.
+- frontend/vite.config.js: inject release version from public JSON at build time, avoiding direct public-directory module imports.
 - frontend/package.json and package-lock.json: React Router 7.18.5. Initial router 6 was replaced after audit flagged it.
 - frontend/public/sw.js and version.json: release 1.1.0, scoped cleanup and successful-response caching only.
 - frontend/.env.example: release example updated.
@@ -43,7 +44,7 @@ Preserved: budgets/savings targets, category/expense editing, saved shopping lis
 
 ## Executed verification
 
-- npm production build: PASS (865 modules, existing Vite CJS deprecation notice).
+- npm production build: PASS (864 modules, existing Vite CJS deprecation notice).
 - Python compileall of backend: PASS with bundled complete Python interpreter. Default MySQL Python installation is unusable.
 - Browser smoke suite in installed Edge: PASS after final router upgrade. Homepage widths 320/375/768/1024/1440; all public/auth direct routes; mobile public menu; mobile workspace navigation and deep-link refresh; protected redirect; invalid credentials; external next URL rejection; authenticated homepage; logout/token removal; no browser runtime errors.
 - Production-build PWA suite: PASS. Worker registration, manifest root launch/icons, cached offline homepage and direct /help route.
@@ -73,3 +74,4 @@ Before production acceptance:
 ## Git and deployment
 
 Release branch: codex/public-product-experience. Commit/push outcome is reported in the delivery message. No destructive database actions, secret changes, production reset or manual deployment was performed. Existing provider/GitHub deployment configuration is preserved.
+

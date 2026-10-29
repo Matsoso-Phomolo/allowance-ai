@@ -1,5 +1,4 @@
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import release from "../public/version.json";
 import PublicSite from "./components/PublicSite";
 import { useCallback, useEffect, useState } from "react";
 
@@ -49,7 +48,7 @@ import Login from "./components/Login";
 import NotificationCenter from "./components/NotificationCenter";
 import Register from "./components/Register";
 
-const APP_VERSION = release.version;
+const APP_VERSION = __APP_VERSION__;
 
 export default function App() {
   const location = useLocation();
