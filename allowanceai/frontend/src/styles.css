@@ -2362,3 +2362,72 @@ select {
     font-size: 24px;
   }
 }
+.contact-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.contact-icon-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+.contact-icon-link svg {
+  width: 24px;
+  height: 24px;
+}
+.contact-icon-link img {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+.contact-icon-link.email:hover {
+  background: var(--section-background);
+}
+.contact-icon-link.whatsapp {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+.contact-icon-link.whatsapp:hover {
+  box-shadow: 0 0 0 3px var(--section-background);
+}
+.contact-icon-link:focus-visible {
+  outline: 3px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+.contact-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: var(--text-primary);
+  color: var(--surface);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 2;
+}
+.contact-icon-link:last-child .contact-tooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.public-footer nav {
+  align-items: center;
+}
+.help-contact {
+  margin-top: 28px;
+}

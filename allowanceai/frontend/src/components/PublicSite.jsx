@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import BudgetCards from "./BudgetCards";
 import { PWAInstallAction } from "./PWAInstallPrompt";
+import ContactIcons from "./ContactIcons";
 const features = [
   [
     "01",
@@ -83,7 +84,7 @@ const faqs = [
   ],
   [
     "How do I contact support?",
-    "Visit Matsoso Phomolo’s portfolio using the contact link below. A dedicated in-app support inbox is not currently available.",
+    "Use the Email or WhatsApp icon in the footer or Help page to contact the developer. Never share passwords or sensitive financial records in a message.",
   ],
 ];
 export default function PublicSite({ user, onLogout }) {
@@ -352,24 +353,26 @@ export default function PublicSite({ user, onLogout }) {
               ))}
             </div>
             {pathname === "/help" && (
-              <div className="help-install">
-                <h3>Take your budget with you</h3>
-                <p>
-                  On iPhone or iPad, open in Safari, then choose Share → Add to
-                  Home Screen. In supported Chrome or Edge browsers, use the
-                  install button or browser menu. Installation availability
-                  depends on your browser.
-                </p>
-                <PWAInstallAction className="secondary-button" />
-                <p>
-                  Installed apps launch the public homepage. Open Dashboard to
-                  access your workspace. Offline access is limited to cached
-                  pages; financial operations need connectivity.
-                </p>
-                <a className="text-link" href="https://matsoso.dev/">
-                  Developer contact options ↗
-                </a>
-              </div>
+              <>
+                <div className="help-install">
+                  <h3>Take your budget with you</h3>
+                  <p>
+                    On iPhone or iPad, open in Safari, then choose Share → Add
+                    to Home Screen. In supported Chrome or Edge browsers, use
+                    the install button or browser menu. Installation
+                    availability depends on your browser.
+                  </p>
+                  <PWAInstallAction className="secondary-button" />
+                  <p>
+                    Installed apps launch the public homepage. Open Dashboard to
+                    access your workspace. Offline access is limited to cached
+                    pages; financial operations need connectivity.
+                  </p>
+                </div>
+                <div id="contact" className="help-contact" aria-label="Contact">
+                  <ContactIcons />
+                </div>
+              </>
             )}
           </section>
         )}
@@ -478,7 +481,7 @@ export default function PublicSite({ user, onLogout }) {
           <Link to="/help">Help & installation</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
-          <a href="https://matsoso.dev/">Contact</a>
+          <ContactIcons />
         </nav>
         <p className="copyright">© AllowanceAI. All rights reserved.</p>
       </footer>
