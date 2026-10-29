@@ -1,4 +1,4 @@
-const DEPLOYMENT_VERSION = "1.1.0";
+const DEPLOYMENT_VERSION = "1.2.0";
 const CACHE_NAME = `allowanceai-${DEPLOYMENT_VERSION}`;
 const APP_SHELL = [
   "/",

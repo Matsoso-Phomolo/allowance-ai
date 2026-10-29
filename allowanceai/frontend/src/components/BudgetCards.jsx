@@ -1,11 +1,6 @@
-function money(value = 0) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(Number(value));
-}
+import { formatMoney } from "../currency";
 
-export default function BudgetCards({ budget }) {
+export default function BudgetCards({ budget, currency }) {
   if (!budget)
     return (
       <section className="panel">
@@ -16,15 +11,32 @@ export default function BudgetCards({ budget }) {
         </p>
       </section>
     );
-  const cards = [
-    { label: "Allowance", value: budget?.allowance, tone: "safe" },
-    { label: "Spent", value: budget?.total_spent, tone: "warning" },
+  const status = String(budget.budget_status || "").toLowerCase();
+  const statusLabel =
     {
-      label: "Remaining",
-      value: budget?.remaining_money,
-      tone: budget?.budget_status || "safe",
+      safe: "Within budget",
+      warning: "Approaching limit",
+      danger:
+        Number(budget.remaining_money) < 0 ? "Over budget" : "Budget at risk",
+    }[status] || "Status unavailable";
+  const cards = [
+    { label: "Monthly budget", value: budget?.allowance, tone: "safe" },
+    {
+      label: "Actual expenditure",
+      value: budget?.total_spent,
+      tone: "neutral",
     },
-    { label: "Savings Target", value: budget?.savings_target, tone: "safe" },
+    {
+      label: "Remaining budget",
+      value: budget?.remaining_money,
+      tone: ["safe", "warning", "danger"].includes(status) ? status : "neutral",
+    },
+    { label: "Savings goal", value: budget?.savings_target, tone: "safe" },
+    {
+      label: "Planned expenditure",
+      value: budget?.total_planned,
+      tone: "neutral",
+    },
   ];
 
   return (
@@ -32,7 +44,12 @@ export default function BudgetCards({ budget }) {
       {cards.map((card) => (
         <article className={`stat-card ${card.tone}`} key={card.label}>
           <span>{card.label}</span>
-          <strong>{money(card.value)}</strong>
+          <strong>
+            {card.value == null ? "—" : formatMoney(card.value, currency)}
+          </strong>
+          {card.label === "Remaining budget" && (
+            <small className="budget-status">{statusLabel}</small>
+          )}
         </article>
       ))}
     </section>

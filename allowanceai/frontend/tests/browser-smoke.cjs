@@ -19,6 +19,8 @@ const { chromium } = require("playwright");
     } else if (path === "/api/budget")
       body = {
         allowance: 0,
+        total_planned: 0,
+        budget_status: "safe",
         total_spent: 0,
         remaining_money: 0,
         savings_target: 0,
@@ -92,7 +94,10 @@ const { chromium } = require("playwright");
   await page.getByRole("button", { name: /^Recent Expenses/ }).click();
   await page.waitForURL("**/app/recent-expenses");
   await page.reload();
-  await page.getByRole("heading", { name: "Recent Expenses", exact: true }).first().waitFor();
+  await page
+    .getByRole("heading", { name: "Recent Expenses", exact: true })
+    .first()
+    .waitFor();
   console.log("PASS mobile workspace navigation and refresh");
   await page.goto("http://127.0.0.1:5173/");
   await page.getByRole("heading", { name: /Take control/ }).waitFor();
@@ -100,6 +105,63 @@ const { chromium } = require("playwright");
   await page.getByRole("link", { name: "Dashboard →", exact: true }).waitFor();
   console.log("PASS authenticated homepage");
   await page.goto("http://127.0.0.1:5173/app");
+  const currency = page.getByLabel("Display currency", { exact: true });
+  await currency.selectOption("LSL");
+  await page
+    .locator(".budget-cards")
+    .getByText("M 0.00", { exact: true })
+    .first()
+    .waitFor();
+  await page.reload();
+  await page.getByLabel("Display currency", { exact: true }).waitFor();
+  if (
+    (await page
+      .getByLabel("Display currency", { exact: true })
+      .inputValue()) !== "LSL"
+  )
+    throw Error("Currency preference lost");
+  await page
+    .getByLabel("Display currency", { exact: true })
+    .selectOption("ZAR");
+  if (
+    !(
+      await page.locator(".budget-cards strong").first().innerText()
+    ).startsWith("R")
+  )
+    throw Error("ZAR preference not restored");
+  console.log("PASS LSL display, preference persistence and ZAR restoration");
+  for (const [status, remaining, label] of [
+    ["safe", 500, "Within budget"],
+    ["warning", 100, "Approaching limit"],
+    ["danger", -20, "Over budget"],
+    ["danger", 20, "Budget at risk"],
+  ]) {
+    await page.route("**/api/budget", (route) =>
+      route.fulfill({
+        json: {
+          allowance: 1000,
+          total_planned: 800,
+          total_spent: 1000 - remaining,
+          remaining_money: remaining,
+          savings_target: 100,
+          budget_status: status,
+        },
+      }),
+    );
+    await page.reload();
+    await page.getByText(label, { exact: true }).waitFor();
+  }
+  console.log("PASS textual budget states including overspending");
+  for (const width of [320, 375, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      )
+    )
+      throw Error("App overflow " + width);
+  }
+  console.log("PASS application widths");
   await page.getByRole("button", { name: "Logout", exact: true }).click();
   await page.waitForURL("http://127.0.0.1:5173/");
   if (await page.evaluate(() => localStorage.getItem("allowanceai_token")))

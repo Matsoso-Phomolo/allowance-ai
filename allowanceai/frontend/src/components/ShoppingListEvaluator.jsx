@@ -1,10 +1,8 @@
+import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
 import SavedShoppingLists from "./SavedShoppingLists";
 
-function money(value = 0) {
-  return `R${Number(value).toFixed(2)}`;
-}
 
 const blankItem = { item_name: "", amount: "", category_name: "" };
 

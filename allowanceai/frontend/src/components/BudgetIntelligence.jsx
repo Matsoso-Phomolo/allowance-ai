@@ -1,6 +1,4 @@
-function money(value = 0) {
-  return `R${Number(value).toFixed(2)}`;
-}
+import { formatMoney as money } from "../currency";
 
 function badgeTone(status = "SAFE") {
   const normalized = status.toLowerCase();

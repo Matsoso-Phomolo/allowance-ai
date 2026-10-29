@@ -1,3 +1,4 @@
+import { formatMoney as money } from "../currency";
 import {
   Bar,
   BarChart,
@@ -8,10 +9,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
-function money(value = 0) {
-  return `R${Number(value).toFixed(2)}`;
-}
 
 function csvEscape(value) {
   return `"${String(value ?? "").replaceAll('"', '""')}"`;
@@ -36,7 +33,9 @@ function pdfEscape(value) {
 }
 
 function wrapText(text, maxLength = 88) {
-  const words = String(text ?? "").split(/\s+/).filter(Boolean);
+  const words = String(text ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
   const lines = [];
   let current = "";
 
@@ -77,7 +76,9 @@ function createPdfBlob(title, lines) {
     return objects.length;
   }
 
-  const fontObjectId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  const fontObjectId = addObject(
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  );
   const pageObjectIds = [];
 
   pages.forEach((pageLines, pageIndex) => {
@@ -86,24 +87,35 @@ function createPdfBlob(title, lines) {
       "/F1 11 Tf",
       `1 0 0 1 ${margin} ${pageHeight - margin} Tm`,
       "16 TL",
-      pageIndex === 0 ? `/F1 18 Tf (${pdfEscape(title)}) Tj` : `/F1 11 Tf (${pdfEscape(title)} continued) Tj`,
+      pageIndex === 0
+        ? `/F1 18 Tf (${pdfEscape(title)}) Tj`
+        : `/F1 11 Tf (${pdfEscape(title)} continued) Tj`,
       "T*",
       "/F1 11 Tf",
       ...pageLines.map((line) => `(${pdfEscape(line)}) Tj T*`),
       "ET",
     ].join("\n");
-    const streamObjectId = addObject(`<< /Length ${text.length} >>\nstream\n${text}\nendstream`);
+    const streamObjectId = addObject(
+      `<< /Length ${text.length} >>\nstream\n${text}\nendstream`,
+    );
     const pageObjectId = addObject(
-      `<< /Type /Page /Parent 0 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${streamObjectId} 0 R >>`
+      `<< /Type /Page /Parent 0 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${fontObjectId} 0 R >> >> /Contents ${streamObjectId} 0 R >>`,
     );
     pageObjectIds.push(pageObjectId);
   });
 
-  const pagesObjectId = addObject(`<< /Type /Pages /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjectIds.length} >>`);
+  const pagesObjectId = addObject(
+    `<< /Type /Pages /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjectIds.length} >>`,
+  );
   pageObjectIds.forEach((pageObjectId) => {
-    objects[pageObjectId - 1] = objects[pageObjectId - 1].replace("/Parent 0 0 R", `/Parent ${pagesObjectId} 0 R`);
+    objects[pageObjectId - 1] = objects[pageObjectId - 1].replace(
+      "/Parent 0 0 R",
+      `/Parent ${pagesObjectId} 0 R`,
+    );
   });
-  const catalogObjectId = addObject(`<< /Type /Catalog /Pages ${pagesObjectId} 0 R >>`);
+  const catalogObjectId = addObject(
+    `<< /Type /Catalog /Pages ${pagesObjectId} 0 R >>`,
+  );
 
   let pdf = "%PDF-1.4\n";
   const offsets = [0];
@@ -192,51 +204,77 @@ export default function MonthlyReport({ report }) {
       "",
       "AI Final Verdict",
       ...wrapText(report.final_verdict),
-      ...(report.decision?.reasoning ? wrapText(report.decision.reasoning) : []),
+      ...(report.decision?.reasoning
+        ? wrapText(report.decision.reasoning)
+        : []),
       "",
       "Category Breakdown",
       ...report.category_summary.flatMap((category) =>
         wrapText(
-          `${category.name}: planned ${money(category.planned_amount)}, spent ${money(category.spent_amount)}, remaining ${money(category.remaining_amount)}, status ${category.status}.`
-        )
+          `${category.name}: planned ${money(category.planned_amount)}, spent ${money(category.spent_amount)}, remaining ${money(category.remaining_amount)}, status ${category.status}.`,
+        ),
       ),
       "",
       "Top Expenses",
       ...(report.top_expenses.length
         ? report.top_expenses.flatMap((expense) =>
-            wrapText(`${expense.item_name} - ${expense.category_name} - ${money(expense.amount)} - ${expense.expense_date}`)
+            wrapText(
+              `${expense.item_name} - ${expense.category_name} - ${money(expense.amount)} - ${expense.expense_date}`,
+            ),
           )
         : ["No expenses yet."]),
       "",
       "Danger / Warning Categories",
       ...(report.overspending_categories.length
         ? report.overspending_categories.flatMap((category) =>
-            wrapText(`${category.name} - ${category.status} - ${money(category.remaining_amount)} left`)
+            wrapText(
+              `${category.name} - ${category.status} - ${money(category.remaining_amount)} left`,
+            ),
           )
         : ["No warning categories."]),
       "",
       "AI Recommendations",
-      ...report.recommendations.flatMap((recommendation) => wrapText(`- ${recommendation}`)),
+      ...report.recommendations.flatMap((recommendation) =>
+        wrapText(`- ${recommendation}`),
+      ),
     ];
 
-    downloadPdf("allowanceai-monthly-report.pdf", "AllowanceAI Monthly Report", lines);
+    downloadPdf(
+      "allowanceai-monthly-report.pdf",
+      "AllowanceAI Monthly Report",
+      lines,
+    );
   }
 
   return (
     <section className="panel monthly-report">
       <div className="panel-heading">
         <h2>Monthly Report</h2>
-        <span className={`pill ${report.budget_health.toLowerCase()}`}>{report.budget_health}</span>
+        <span className={`pill ${report.budget_health.toLowerCase()}`}>
+          {report.budget_health}
+        </span>
       </div>
 
       <div className="report-actions">
-        <button className="secondary-button" type="button" onClick={exportReportPdf}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={exportReportPdf}
+        >
           Print Report PDF
         </button>
-        <button className="secondary-button" type="button" onClick={exportExpenses}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={exportExpenses}
+        >
           Export Expenses CSV
         </button>
-        <button className="secondary-button" type="button" onClick={exportBudgetSummary}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={exportBudgetSummary}
+        >
           Export Budget Summary CSV
         </button>
       </div>
@@ -273,9 +311,9 @@ export default function MonthlyReport({ report }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
+            <Tooltip formatter={(value) => money(value)} />
             <Legend />
-            <Bar dataKey="spent" fill="#1d4ed8" />
+            <Bar dataKey="spent" fill="var(--brand-primary)" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -287,10 +325,10 @@ export default function MonthlyReport({ report }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
+            <Tooltip formatter={(value) => money(value)} />
             <Legend />
-            <Bar dataKey="planned" fill="#94a3b8" />
-            <Bar dataKey="spent" fill="#16a34a" />
+            <Bar dataKey="planned" fill="var(--chart-planned)" />
+            <Bar dataKey="spent" fill="var(--chart-actual)" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -302,8 +340,8 @@ export default function MonthlyReport({ report }) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
-            <Tooltip />
-            <Bar dataKey="amount" fill="#eab308" />
+            <Tooltip formatter={(value) => money(value)} />
+            <Bar dataKey="amount" fill="var(--warning)" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -317,7 +355,8 @@ export default function MonthlyReport({ report }) {
             ) : (
               report.top_expenses.map((expense) => (
                 <span key={expense.id}>
-                  {expense.item_name} - {expense.category_name} - {money(expense.amount)}
+                  {expense.item_name} - {expense.category_name} -{" "}
+                  {money(expense.amount)}
                 </span>
               ))
             )}
@@ -331,7 +370,8 @@ export default function MonthlyReport({ report }) {
             ) : (
               report.overspending_categories.map((category) => (
                 <span key={category.id}>
-                  {category.name} - {category.status} - {money(category.remaining_amount)} left
+                  {category.name} - {category.status} -{" "}
+                  {money(category.remaining_amount)} left
                 </span>
               ))
             )}

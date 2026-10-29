@@ -1,8 +1,6 @@
+import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
-function money(value = 0) {
-  return `R${Number(value).toFixed(2)}`;
-}
 
 export default function CategoryList({ categories, onDeleteCategory, onUpdateCategory }) {
   const [editingId, setEditingId] = useState(null);

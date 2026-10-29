@@ -1,3 +1,4 @@
+import { formatMoney as money } from "../currency";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Suspense, lazy, useRef, useState } from "react";
 
@@ -359,8 +360,7 @@ function CategorySurvival({ intelligence }) {
             <div>
               <strong>{category.name}</strong>
               <span>
-                {category.priority} - {category.spending_pattern}, remaining R
-                {Number(category.remaining_amount).toFixed(2)}
+                {category.priority} - {category.spending_pattern}, remaining {money(category.remaining_amount)}
               </span>
             </div>
             <span

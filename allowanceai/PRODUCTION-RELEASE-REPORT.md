@@ -1,4 +1,6 @@
-# Production release check — 29 October 2026
+# Historical production release check — 29 October 2026
+
+This records the earlier withheld release attempt. The subsequent budgeting identity release is documented in BUDGETING-IDENTITY-REPORT.md and the delivery message.
 
 ## Outcome: production push withheld
 

@@ -62,7 +62,7 @@ Manifest/icons and service worker are preserved. Installed apps intentionally st
 
 Worker uses network-first public resources and same-origin pages, skips cross-origin API traffic, caches successful responses and clears only old AllowanceAI cache names. Cached navigation/app resources may open offline; financial operations require connectivity. `/offline.html` is the final fallback. Test installation and offline behavior on real devices before release. Safe-area viewport and reduced-motion styling are included.
 
-Release version is `1.1.0`. Update `public/version.json` and `DEPLOYMENT_VERSION` in `public/sw.js` together for every release. App version reads the build-time JSON, avoiding stale Vercel version environment values. Polling displays an update banner when the deployed JSON differs. Existing `VITE_APP_VERSION` is no longer authoritative.
+Release version is `1.2.0`. Update `public/version.json` and `DEPLOYMENT_VERSION` in `public/sw.js` together for every release. App version reads the build-time JSON, avoiding stale Vercel version environment values. Polling displays an update banner when the deployed JSON differs. Existing `VITE_APP_VERSION` is no longer authoritative.
 
 ## Testing and troubleshooting
 
@@ -85,3 +85,11 @@ See `IMPLEMENTATION-INVENTORY.md` and `IMPLEMENTATION-REPORT.md` for scope, veri
 
 PWA production-build smoke check: start `npm run preview -- --host 127.0.0.1 --port 4173`, then run `node tests/pwa-smoke.cjs` with Playwright available.
 Frontend builds require Node.js 20 or newer (Node.js 24 used for this verification). Set a compatible Node version in Vercel project settings.
+
+## Budgeting identity and currency display
+
+The public site and application share a Lesotho-inspired green palette: #EAF5E8 page background, #D4EBCB secondary surfaces, #277A43 actions, #173D2C text and #8DBD75 accents. White cards/forms preserve readability. CSS tokens define the palette; no banknote imagery is used. Backend budget summaries supply monthly budget, total planned, actual expenditure, remaining budget and savings goal. Status labels accompany color, and a negative remaining amount displays Over budget.
+
+The app header offers ZAR (existing default) and LSL (M) display formats. Selection is saved only in this browser, never to PostgreSQL. Currency selection changes formatting only: no conversion, numeric changes, schema changes or backend preference overrides. Choose the denomination used for your existing entries. The public demonstration explicitly uses LSL. Structured amounts throughout the workspace use the shared currency formatter; backend-generated narrative advice retains original currency wording. Account export/CSV raw amounts remain numeric and unchanged. Income tracking is not advertised because the backend only supports allowance planning.
+
+Currency tests: `node --test tests/currency.test.cjs`. Browser tests also verify selection persistence, ZAR restoration, status labels and authenticated widths. See BUDGETING-IDENTITY-REPORT.md for this release.

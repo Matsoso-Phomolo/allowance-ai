@@ -1,13 +1,13 @@
 {
   "name": "AllowanceAI",
   "short_name": "AllowanceAI",
-  "description": "Monthly allowance, spending, savings, data, mokhatlo, and everyday budget control.",
+  "description": "Your personal budgeting and money management system.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
-  "theme_color": "#1d4ed8",
+  "background_color": "#EAF5E8",
+  "theme_color": "#277A43",
   "icons": [
     {
       "src": "/icon-192.png",

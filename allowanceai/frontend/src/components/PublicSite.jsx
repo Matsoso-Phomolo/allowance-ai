@@ -5,12 +5,12 @@ import InstallButton from "./InstallButton";
 const features = [
   [
     "01",
-    "A plan for every rand",
+    "Create your monthly budget",
     "Set your monthly allowance, savings target and category limits. Give everyday spending a clear place in your plan.",
   ],
   [
     "02",
-    "Know where it goes",
+    "Track expenses by category",
     "Record expenses, review your history and adjust entries as your month unfolds.",
   ],
   [
@@ -20,12 +20,12 @@ const features = [
   ],
   [
     "04",
-    "See the bigger picture",
+    "Monthly insights and reports",
     "Explore monthly reports, charts, spending patterns and rule-based recommendations.",
   ],
   [
     "05",
-    "Keep savings in sight",
+    "Plan toward a savings goal",
     "Include a savings target and savings categories in your monthly budget.",
   ],
   [
@@ -92,7 +92,7 @@ export default function PublicSite({ user, onLogout }) {
   useEffect(() => {
     setMenu(false);
     window.scrollTo(0, 0);
-    document.title = `${pathname === "/" ? "Take control of your money" : pathname.slice(1).replaceAll("-", " ")} | AllowanceAI`;
+    document.title = `${pathname === "/" ? "Your Personal Budgeting and Money Management System" : pathname.slice(1).replaceAll("-", " ")} | AllowanceAI`;
   }, [pathname]);
   const known = [
     "/",
@@ -182,18 +182,18 @@ export default function PublicSite({ user, onLogout }) {
             <section className="hero public-container">
               <div>
                 <p className="eyebrow">
-                  <span className="status-dot" /> A little clarity. A better
-                  month.
+                  <span className="status-dot" /> Your Personal Budgeting and
+                  Money Management System
                 </p>
                 <h1>
-                  Take control
+                  Take control of your money.
                   <br />
-                  of your <em>money.</em>
+                  <em>Plan your budget.</em>
                 </h1>
                 <p className="hero-copy">
-                  Plan your budget, understand your spending and keep your
-                  savings in sight. One simple workspace for your everyday
-                  financial life.
+                  AllowanceAI helps you plan your monthly allowance, organize
+                  spending, track expenses and keep savings goals in sight — all
+                  from one simple budgeting workspace.
                 </p>
                 <div className="cta-row">
                   <Link
@@ -208,7 +208,7 @@ export default function PublicSite({ user, onLogout }) {
                   </Link>
                 </div>
                 <p className="small-note">
-                  Built for real life. Designed around your monthly budget.
+                  Build better financial habits, one month at a time.
                 </p>
               </div>
               <div className="preview-frame">
@@ -216,11 +216,14 @@ export default function PublicSite({ user, onLogout }) {
                   <span className="brand">AllowanceAI</span>
                   <span className="sample-badge">Demonstration data</span>
                 </div>
-                <p className="eyebrow">Your month, at a glance</p>
-                <h2>A clearer picture.</h2>
+                <p className="eyebrow">Budgeting dashboard · Sample month</p>
+                <h2>Your monthly budget.</h2>
                 <BudgetCards
+                  currency="LSL"
                   budget={{
                     allowance: 3000,
+                    total_planned: 2400,
+                    budget_status: "safe",
                     total_spent: 1240,
                     remaining_money: 1760,
                     savings_target: 400,
@@ -228,9 +231,9 @@ export default function PublicSite({ user, onLogout }) {
                 />
                 <div className="preview-categories">
                   {[
-                    ["Food", 64, "R640 / R1,000"],
-                    ["Transport", 55, "R440 / R800"],
-                    ["Everyday essentials", 40, "R160 / R400"],
+                    ["Food", 64, "M640 / M1,000"],
+                    ["Transport", 55, "M440 / M800"],
+                    ["Everyday essentials", 40, "M160 / M400"],
                   ].map(([label, value, amount]) => (
                     <div key={label}>
                       <div>
@@ -246,7 +249,7 @@ export default function PublicSite({ user, onLogout }) {
                   ))}
                 </div>
                 <p className="small-note">
-                  Illustrative budget · Actual summary card component
+                  Demonstration only · LSL amounts shown in maloti (M)
                   <br />
                   Your account displays your own financial records.
                 </p>
@@ -290,7 +293,7 @@ export default function PublicSite({ user, onLogout }) {
           <section className="steps-section">
             <div className="public-container section-space">
               <p className="eyebrow">Small steps, lasting clarity</p>
-              <h2>Your next month starts here.</h2>
+              <h2>How AllowanceAI works</h2>
               <div className="steps-grid">
                 {steps.map(([title, copy], i) => (
                   <article key={title}>
@@ -463,7 +466,7 @@ export default function PublicSite({ user, onLogout }) {
           <Link className="brand" to="/">
             AllowanceAI
           </Link>
-          <p>Everyday finances, with a clearer direction.</p>
+          <p>Your Personal Budgeting and Money Management System.</p>
           <p>
             Independently developed by{" "}
             <a href="https://matsoso.dev/">Matsoso Phomolo</a>.

@@ -1,3 +1,4 @@
+import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
 export default function CanIBuy({ categories, onCheck }) {
@@ -69,8 +70,8 @@ export default function CanIBuy({ categories, onCheck }) {
           <p>{decision.advice}</p>
           {decision.reasoning && <span>{decision.reasoning}</span>}
           {decision.confidence != null && <span>Confidence: {Math.round(decision.confidence * 100)}%</span>}
-          <span>Money after purchase: R{decision.money_after_purchase.toFixed(2)}</span>
-          <span>Category after purchase: R{decision.category_after_purchase.toFixed(2)}</span>
+          <span>Money after purchase: {money(decision.money_after_purchase)}</span>
+          <span>Category after purchase: {money(decision.category_after_purchase)}</span>
           {decision.recommendations?.length > 0 && (
             <div className="mini-list">
               <strong>Recommendations</strong>

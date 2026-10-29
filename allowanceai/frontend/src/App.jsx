@@ -1,3 +1,4 @@
+import { getDisplayCurrency, saveDisplayCurrency } from "./currency";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import PublicSite from "./components/PublicSite";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,6 +52,7 @@ import Register from "./components/Register";
 const APP_VERSION = __APP_VERSION__;
 
 export default function App() {
+  const [displayCurrency, setDisplayCurrency] = useState(getDisplayCurrency);
   const logoutRequested = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -441,7 +443,11 @@ export default function App() {
   if (isApp && !user)
     return (
       <Navigate
-        to={logoutRequested.current ? "/" : `/login?next=${encodeURIComponent(location.pathname)}`}
+        to={
+          logoutRequested.current
+            ? "/"
+            : `/login?next=${encodeURIComponent(location.pathname)}`
+        }
         replace
       />
     );
@@ -474,13 +480,27 @@ export default function App() {
           <h1>AllowanceAI</h1>
         </div>
         <p className="header-summary">
-          Monthly allowance, spending, savings, data, mokhatlo, and everyday
-          budget control.
+          Your personal budgeting and money management system.
         </p>
         <div className="user-menu">
           <Link to="/">Home</Link>
           <Link to="/help">Help</Link>
           <span>{user.name}</span>
+          <label className="currency-control">
+            Display currency
+            <select
+              aria-label="Display currency"
+              value={displayCurrency}
+              onChange={(event) => {
+                saveDisplayCurrency(event.target.value);
+                setDisplayCurrency(event.target.value);
+              }}
+              aria-describedby="currency-note"
+            >
+              <option value="ZAR">ZAR · R</option>
+              <option value="LSL">LSL · M</option>
+            </select>
+          </label>
           <NotificationCenter
             notifications={notifications}
             onDelete={handleDeleteNotification}
@@ -497,6 +517,11 @@ export default function App() {
         </div>
       </header>
 
+      <p id="currency-note" className="currency-note">
+        Currency display only · Choose the denomination of your entries. No
+        conversion or stored amount changes. Saved in this browser;
+        server-written advice retains its original currency wording.
+      </p>
       {error && (
         <div role="alert" className="notice danger">
           {error}{" "}

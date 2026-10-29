@@ -1,8 +1,6 @@
+import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
-function money(value = 0) {
-  return `R${Number(value).toFixed(2)}`;
-}
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7);
