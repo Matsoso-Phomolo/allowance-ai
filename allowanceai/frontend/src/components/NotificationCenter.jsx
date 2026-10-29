@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 export default function NotificationCenter({
+  inline = false,
   notifications,
   onDelete,
   onMarkAllRead,
   onMarkRead,
 }) {
+  const id = useId();
   const [open, setOpen] = useState(false);
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.is_read).length,
@@ -17,34 +19,56 @@ export default function NotificationCenter({
   }
 
   return (
-    <div className="notification-center">
-      <button
-        aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
-        className="notification-button"
-        type="button"
-        onClick={handleOpen}
-      >
-        <svg aria-hidden="true" fill="none" height="22" viewBox="0 0 24 24" width="22">
-          <path
-            d="M15 17H9m9-2v-4a6 6 0 0 0-12 0v4l-2 2h16l-2-2Zm-4 4a2 2 0 0 1-4 0"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-          />
-        </svg>
-        {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-      </button>
+    <div className={inline ? "notification-page" : "notification-center"}>
+      {!inline && (
+        <button
+          aria-expanded={open}
+          aria-controls={id}
+          aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
+          className="notification-button"
+          type="button"
+          onClick={handleOpen}
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="22"
+            viewBox="0 0 24 24"
+            width="22"
+          >
+            <path
+              d="M15 17H9m9-2v-4a6 6 0 0 0-12 0v4l-2 2h16l-2-2Zm-4 4a2 2 0 0 1-4 0"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+            />
+          </svg>
+          {unreadCount > 0 && (
+            <span className="notification-badge">{unreadCount}</span>
+          )}
+        </button>
+      )}
 
-      {open && (
-        <section className="notification-menu" aria-label="Notification center">
+      {(inline || open) && (
+        <section
+          id={id}
+          className={
+            inline ? "panel notification-page-panel" : "notification-menu"
+          }
+          aria-label="Notification center"
+        >
           <div className="notification-menu-header">
             <div>
               <h2>Notifications</h2>
-              <p>In-app reminders are active. Phone push notifications are not enabled yet.</p>
+              <p>Account activity and budget reminders.</p>
             </div>
             {unreadCount > 0 && (
-              <button className="ghost-button small" type="button" onClick={onMarkAllRead}>
+              <button
+                className="ghost-button small"
+                type="button"
+                onClick={onMarkAllRead}
+              >
                 Read all
               </button>
             )}
@@ -68,11 +92,17 @@ export default function NotificationCenter({
                   </div>
                   <div className="notification-actions">
                     {!notification.is_read && (
-                      <button type="button" onClick={() => onMarkRead(notification.id)}>
+                      <button
+                        type="button"
+                        onClick={() => onMarkRead(notification.id)}
+                      >
                         Mark read
                       </button>
                     )}
-                    <button type="button" onClick={() => onDelete(notification.id)}>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(notification.id)}
+                    >
                       Clear
                     </button>
                   </div>

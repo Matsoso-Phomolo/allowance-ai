@@ -1,8 +1,11 @@
 import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
-
-export default function CategoryList({ categories, onDeleteCategory, onUpdateCategory }) {
+export default function CategoryList({
+  categories,
+  onDeleteCategory,
+  onUpdateCategory,
+}) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ name: "", planned_amount: "" });
   const [message, setMessage] = useState("");
@@ -28,7 +31,9 @@ export default function CategoryList({ categories, onDeleteCategory, onUpdateCat
 
   async function handleDelete(category) {
     setMessage("");
-    const confirmed = window.confirm(`Delete ${category.name}? Categories with expenses cannot be deleted.`);
+    const confirmed = window.confirm(
+      `Delete ${category.name}? Categories with expenses cannot be deleted.`,
+    );
     if (!confirmed) {
       return;
     }
@@ -60,7 +65,9 @@ export default function CategoryList({ categories, onDeleteCategory, onUpdateCat
                   <input
                     required
                     value={form.name}
-                    onChange={(event) => setForm({ ...form, name: event.target.value })}
+                    onChange={(event) =>
+                      setForm({ ...form, name: event.target.value })
+                    }
                   />
                 </label>
                 <label>
@@ -70,12 +77,18 @@ export default function CategoryList({ categories, onDeleteCategory, onUpdateCat
                     required
                     type="number"
                     value={form.planned_amount}
-                    onChange={(event) => setForm({ ...form, planned_amount: event.target.value })}
+                    onChange={(event) =>
+                      setForm({ ...form, planned_amount: event.target.value })
+                    }
                   />
                 </label>
                 <div className="category-actions">
                   <button type="submit">Save</button>
-                  <button className="secondary-button" type="button" onClick={() => setEditingId(null)}>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => setEditingId(null)}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -86,26 +99,45 @@ export default function CategoryList({ categories, onDeleteCategory, onUpdateCat
                   <div>
                     <strong>{category.name}</strong>
                     <span>
-                      {money(category.spent_amount)} of {money(category.planned_amount)}
+                      {money(category.spent_amount)} of{" "}
+                      {money(category.planned_amount)}
                     </span>
                   </div>
-                  <span className={`pill ${category.status}`}>{category.status_label || category.status}</span>
+                  <span className={`pill ${category.status}`}>
+                    {category.status_label || category.status}
+                  </span>
                 </div>
                 <div className="progress-track">
                   <div
                     className={`progress-fill ${category.status}`}
-                    style={{ width: `${Math.min(category.percentage_used, 100)}%` }}
+                    style={{
+                      width: `${Math.min(category.percentage_used, 100)}%`,
+                    }}
                   />
                 </div>
                 <div className="category-footer">
-                  <span>{category.percentage_used.toFixed(0)}% used</span>
+                  <span>
+                    {category.planned_amount > 0
+                      ? `${category.percentage_used.toFixed(0)}% used`
+                      : category.spent_amount > 0
+                        ? "Unplanned spending"
+                        : "No limit allocated"}
+                  </span>
                   <span>{money(category.remaining_amount)} left</span>
                 </div>
                 <div className="category-actions">
-                  <button className="secondary-button" type="button" onClick={() => startEditing(category)}>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => startEditing(category)}
+                  >
                     Edit
                   </button>
-                  <button className="danger-button" type="button" onClick={() => handleDelete(category)}>
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() => handleDelete(category)}
+                  >
                     Delete
                   </button>
                 </div>

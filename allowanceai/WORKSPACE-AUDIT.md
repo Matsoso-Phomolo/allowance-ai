@@ -1,0 +1,9 @@
+# Workspace and zero-default audit — before implementation
+
+Registration in backend/crud.py calls seed_default_data: a persisted budget (allowance 1500, savings_target 100) plus seven categories summing to 1500, followed by a welcome notification. No expenses or shopping lists are seeded. MonthlyPlanner independently defaults allowance to 1500, savings to 100, Data Bundles to 250 and Mokhatlo to 200; these are frontend proposal inputs, not database records. BudgetForm placeholders show 1500/100 but do not save values. PublicSite has explicitly labeled demo data; preserve it. Local storage holds authentication, currency-display and PWA state, not financial totals.
+
+Current budget selection is latest-by-ID across all months; summary and category spending use all-time expenses. Full expense history must remain available while monthly summaries/reports use the requested/current month. Categories have no month column and remain reusable, user-owned allocation limits. No schema changes or retrospective data resets are planned.
+
+Backend: FastAPI main:app, SQLAlchemy models, no Alembic. Authentication uses existing salted password hashes and signed tokens; financial CRUD checks user ownership. Frontend: App owns API state/actions, Dashboard uses sixteen equally prominent section buttons. All sections and old URLs must remain accessible in a grouped workspace. Rentalink's local AppLayout.tsx was read as a compact shell/navigation reference; its domain logic and branding are not reused.
+
+New registration will create only the user. Missing budgets will have explicit configured=false and a month in the summary, distinct from a user-saved zero budget. Existing budgets/categories/expenses/notifications are preserved. Optional month filtering and additive response fields preserve existing endpoint shapes. Tests use isolated SQLite and PostgreSQL-dialect compilation; no Neon credentials or production rows are touched.

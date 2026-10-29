@@ -5,12 +5,14 @@ from pydantic import AliasChoices, BaseModel, Field
 
 
 class BudgetCreate(BaseModel):
-    month: str = Field(..., examples=["2026-05"])
-    allowance: float = Field(..., gt=0)
+    month: str = Field(..., pattern=r"^[1-9][0-9]{3}-(0[1-9]|1[0-2])$", examples=["2026-05"])
+    allowance: float = Field(..., ge=0)
     savings_target: float = Field(0, ge=0)
 
 
 class BudgetSummary(BaseModel):
+    configured: bool = False
+    month: str | None = None
     allowance: float
     total_planned: float
     total_spent: float

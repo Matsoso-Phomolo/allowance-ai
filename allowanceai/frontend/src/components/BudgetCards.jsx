@@ -14,11 +14,20 @@ export default function BudgetCards({ budget, currency }) {
   const status = String(budget.budget_status || "").toLowerCase();
   const statusLabel =
     {
+      unconfigured: "Not configured",
       safe: "Within budget",
       warning: "Approaching limit",
       danger:
         Number(budget.remaining_money) < 0 ? "Over budget" : "Budget at risk",
     }[status] || "Status unavailable";
+  const remainingLabel =
+    budget.configured === false
+      ? "Not configured"
+      : Number(budget.allowance) === 0 &&
+          Number(budget.total_spent) === 0 &&
+          budget.configured === true
+        ? "Zero budget · no spending"
+        : statusLabel;
   const cards = [
     { label: "Monthly budget", value: budget?.allowance, tone: "safe" },
     {
@@ -48,7 +57,7 @@ export default function BudgetCards({ budget, currency }) {
             {card.value == null ? "—" : formatMoney(card.value, currency)}
           </strong>
           {card.label === "Remaining budget" && (
-            <small className="budget-status">{statusLabel}</small>
+            <small className="budget-status">{remainingLabel}</small>
           )}
         </article>
       ))}

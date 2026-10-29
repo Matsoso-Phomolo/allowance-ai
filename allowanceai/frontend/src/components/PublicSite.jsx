@@ -42,7 +42,7 @@ const steps = [
   ],
   [
     "Organize your finances",
-    "Review the starter budget, set your own allowance and savings target, and organize categories.",
+    "Set your own monthly allowance and savings target, then organize your budget categories.",
   ],
   [
     "Track your progress",
@@ -64,7 +64,7 @@ const faqs = [
   ],
   [
     "How do I create an account?",
-    "Choose Get Started and register with your name, email and a password of at least six characters. Review the starter amounts and replace them with your own budget.",
+    "Choose Get Started and register with your name, email and a password of at least six characters. New accounts start with no configured budget or financial records. Add your own budget and categories.",
   ],
   [
     "Can I use it on my phone?",

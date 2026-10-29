@@ -21,6 +21,8 @@ const { chromium } = require("playwright");
         allowance: 0,
         total_planned: 0,
         budget_status: "safe",
+        configured: true,
+        month: new Date().toISOString().slice(0, 7),
         total_spent: 0,
         remaining_money: 0,
         savings_target: 0,
@@ -91,7 +93,10 @@ const { chromium } = require("playwright");
   await page.waitForURL("**/app");
   console.log("PASS safe redirect");
   await page.getByRole("button", { name: /Workspace menu/ }).click();
-  await page.getByRole("button", { name: /^Recent Expenses/ }).click();
+  await page
+    .getByRole("navigation", { name: "Financial workspace" })
+    .getByRole("button", { name: "Expenses", exact: true })
+    .click();
   await page.waitForURL("**/app/recent-expenses");
   await page.reload();
   await page

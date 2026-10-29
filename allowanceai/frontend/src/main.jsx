@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import { PWAInstallProvider } from "./components/PWAInstallPrompt";
 import App from "./App.jsx";
 import "./styles.css";
+import "./workspace.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

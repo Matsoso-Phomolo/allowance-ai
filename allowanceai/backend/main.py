@@ -1,7 +1,7 @@
 import os
 import time
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -275,8 +275,8 @@ def create_budget(
 
 
 @app.get("/api/budget", response_model=schemas.BudgetSummary)
-def get_budget(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    return crud.get_budget_summary(db, current_user)
+def get_budget(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user), month: str | None = Query(None, pattern=r"^[1-9][0-9]{3}-(0[1-9]|1[0-2])$")):
+    return crud.get_budget_summary(db, current_user, month)
 
 
 @app.post("/api/categories")

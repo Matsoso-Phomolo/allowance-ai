@@ -1,9 +1,17 @@
+import { Link } from "react-router-dom";
+import WorkspaceOverview from "./WorkspaceOverview";
+import WorkspaceIcon from "./WorkspaceIcon";
+import NotificationCenter from "./NotificationCenter";
+import {
+  isBudgetConfigured,
+  monthlyExpenses,
+  workspaceMonth,
+} from "../workspaceData";
 import { formatMoney as money } from "../currency";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Suspense, lazy, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 
 import AlertsPanel from "./AlertsPanel";
-import BudgetCards from "./BudgetCards";
 import BudgetForm from "./BudgetForm";
 import BudgetIntelligence from "./BudgetIntelligence";
 import CanIBuy from "./CanIBuy";
@@ -51,12 +59,16 @@ export default function Dashboard({
   savedShoppingLists,
   timetable,
   user,
+  notifications,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
+  onDeleteNotification,
 }) {
   const [mobileNavigation, setMobileNavigation] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const aliases = {
-    dashboard: "budget",
+    dashboard: "overview",
     budgets: "budget",
     transactions: "recent-expenses",
     savings: "budget",
@@ -64,9 +76,31 @@ export default function Dashboard({
     reports: "graphs",
     settings: "profile",
   };
-  const routeSection = location.pathname.split("/")[2] || "budget";
+  const routeSection = location.pathname.split("/")[2] || "overview";
   const activeSection = aliases[routeSection] || routeSection;
   const activeSectionRef = useRef(null);
+  const drawerRef = useRef(null);
+  const configured = isBudgetConfigured(budget);
+  const hasActivity =
+    monthlyExpenses(expenses, workspaceMonth(budget)).length > 0;
+  useEffect(() => {
+    if (!mobileNavigation) return;
+    const modal = drawerRef.current,
+      previous = document.activeElement;
+    modal.showModal();
+    return () => {
+      modal.close();
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [mobileNavigation]);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const resize = () => {
+      if (media.matches) setMobileNavigation(false);
+    };
+    media.addEventListener("change", resize);
+    return () => media.removeEventListener("change", resize);
+  }, []);
   const dashboardSections = [
     {
       id: "budget",
@@ -222,90 +256,414 @@ export default function Dashboard({
       ),
     },
   ];
+
+  dashboardSections.unshift(
+    {
+      id: "overview",
+      title: "Overview",
+      summary: "Your current month at a glance.",
+      content: (
+        <WorkspaceOverview
+          budget={budget}
+          categories={categories}
+          expenses={expenses}
+          monthlyInsights={monthlyInsights}
+          onNavigate={handleSectionSelect}
+        />
+      ),
+    },
+    {
+      id: "notifications",
+      title: "Notifications",
+      summary: "Updates from your account activity.",
+      content: (
+        <NotificationCenter
+          inline
+          notifications={notifications}
+          onMarkRead={onMarkNotificationRead}
+          onMarkAllRead={onMarkAllNotificationsRead}
+          onDelete={onDeleteNotification}
+        />
+      ),
+    },
+    {
+      id: "admin",
+      title: "Administration",
+      summary: "Authorized system overview.",
+      content:
+        user?.role === "admin" ? (
+          <Suspense
+            fallback={<SectionSkeleton title="Loading administration" />}
+          >
+            <AdminDashboard
+              health={adminHealth}
+              stats={adminStats}
+              users={adminUsers}
+            />
+          </Suspense>
+        ) : (
+          <WorkspaceEmpty
+            title="Access restricted"
+            text="This section requires administrator authorization."
+          />
+        ),
+    },
+  );
   const validSection = dashboardSections.some(
     (section) => section.id === activeSection,
   );
   const selectedSection =
     dashboardSections.find((section) => section.id === activeSection) ||
     dashboardSections[0];
-
+  const currentItem = WORKSPACE_GROUPS.flatMap((group) => group.items).find(
+    (item) => item.sections.includes(selectedSection.id),
+  );
+  const tabs =
+    currentItem?.sections.length > 1
+      ? currentItem.sections.map((id) =>
+          dashboardSections.find((section) => section.id === id),
+        )
+      : [];
+  let content = selectedSection.content;
+  if (
+    !budget &&
+    !["profile", "notifications", "admin"].includes(selectedSection.id)
+  )
+    content = (
+      <WorkspaceEmpty
+        title="Financial data is unavailable"
+        text="The budget summary could not be loaded. Use Retry above before changing your financial plan."
+      />
+    );
+  else if (
+    ["graphs", "monthly-insights"].includes(selectedSection.id) &&
+    (!hasActivity || !configured)
+  )
+    content = (
+      <WorkspaceEmpty
+        title={
+          configured
+            ? "No financial activity to analyze yet"
+            : "Configure a budget to analyze this month"
+        }
+        text="Monthly analysis needs a configured budget and recorded spending. Your full history remains available in Expenses."
+        action={configured ? "Record an expense" : "Configure budget"}
+        onAction={() =>
+          handleSectionSelect(
+            configured
+              ? categories.length
+                ? "add-expense"
+                : "add-category"
+              : "budget",
+          )
+        }
+      />
+    );
+  else if (
+    [
+      "budget-intelligence",
+      "ai-recommendations",
+      "category-survival",
+      "alerts",
+    ].includes(selectedSection.id) &&
+    (!configured || !hasActivity)
+  )
+    content = (
+      <WorkspaceEmpty
+        title="Build your financial picture first"
+        text="Budgeting intelligence needs a configured budget and recorded spending. No recommendations are shown in this empty view."
+        action={configured ? "Record an expense" : "Configure budget"}
+        onAction={() =>
+          handleSectionSelect(
+            configured
+              ? categories.length
+                ? "add-expense"
+                : "add-category"
+              : "budget",
+          )
+        }
+      />
+    );
+  else if (
+    selectedSection.id === "spending-timetable" &&
+    (!configured || !categories.length)
+  )
+    content = (
+      <WorkspaceEmpty
+        title="Set up category limits first"
+        text="Your timetable uses your own configured budget and category allocations."
+        action="Manage categories"
+        onAction={() => handleSectionSelect("categories")}
+      />
+    );
+  else if (selectedSection.id === "add-expense" && !categories.length)
+    content = (
+      <WorkspaceEmpty
+        title="Create a category for your first expense"
+        text="Categories organize your spending. Add your own category and planned amount to get started."
+        action="Create category"
+        onAction={() => handleSectionSelect("add-category")}
+      />
+    );
   function handleSectionSelect(sectionId) {
     navigate(`/app/${sectionId}`);
     setMobileNavigation(false);
     window.requestAnimationFrame(() => {
+      activeSectionRef.current?.focus({ preventScroll: true });
       activeSectionRef.current?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
+        behavior: "auto",
         block: "start",
       });
     });
   }
-
+  const navigation = (
+    <WorkspaceNavigation
+      active={selectedSection.id}
+      user={user}
+      notifications={notifications}
+      onNavigate={handleSectionSelect}
+    />
+  );
   return (
-    <main className="dashboard">
-      <BudgetCards budget={budget} />
-      {!validSection && (
-        <div role="status" className="notice">
-          That section is unavailable. Choose a section from the navigation.
-        </div>
-      )}
-      {user?.role === "admin" && (
-        <Suspense
-          fallback={<SectionSkeleton title="Loading admin dashboard" />}
-        >
-          <AdminDashboard
-            health={adminHealth}
-            stats={adminStats}
-            users={adminUsers}
-          />
-        </Suspense>
-      )}
-
+    <div className="workspace-layout">
+      <aside className="workspace-sidebar">{navigation}</aside>
       <button
-        className="dashboard-nav-toggle"
+        className="workspace-menu-toggle"
         type="button"
+        aria-label="Workspace menu"
+        aria-haspopup="dialog"
         aria-expanded={mobileNavigation}
-        aria-controls="dashboard-navigation"
-        onClick={() => setMobileNavigation(!mobileNavigation)}
+        onClick={() => setMobileNavigation(true)}
       >
-        Workspace menu · {selectedSection.title}
+        <WorkspaceIcon name="menu" />
       </button>
-      <section
-        id="dashboard-navigation"
-        className={`dashboard-navigator ${mobileNavigation ? "mobile-open" : ""}`}
-        aria-label="Dashboard sections"
-      >
-        {dashboardSections.map((section) => (
-          <button
-            className={`dashboard-nav-button ${section.id === selectedSection.id ? "active" : ""}`}
-            aria-current={
-              section.id === selectedSection.id ? "page" : undefined
+      {mobileNavigation && (
+        <dialog
+          ref={drawerRef}
+          className="workspace-drawer"
+          aria-label="Workspace navigation"
+          onCancel={(event) => {
+            event.preventDefault();
+            setMobileNavigation(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Tab") return;
+            const controls = Array.from(
+              drawerRef.current.querySelectorAll("button,a[href]"),
+            );
+            const first = controls[0],
+              last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first.focus();
             }
-            key={section.id}
+          }}
+        >
+          <button
+            className="workspace-drawer-close"
             type="button"
-            onClick={() => handleSectionSelect(section.id)}
+            aria-label="Close workspace menu"
+            onClick={() => setMobileNavigation(false)}
+            autoFocus
           >
-            <strong>{section.title}</strong>
-            <span>{section.summary}</span>
+            <WorkspaceIcon name="close" />
           </button>
-        ))}
-      </section>
-
-      <section
-        className="active-dashboard-section"
-        aria-live="polite"
-        ref={activeSectionRef}
-      >
-        <div className="active-section-heading">
+          {navigation}
+        </dialog>
+      )}
+      <main className="workspace-main">
+        {!validSection && (
+          <p role="status" className="notice">
+            That section is unavailable. Your overview is shown below.
+          </p>
+        )}
+        <header className="workspace-page-heading">
           <div>
-            <p className="eyebrow">Selected section</p>
-            <h2>{selectedSection.title}</h2>
+            <p className="eyebrow">
+              Personal finance / {workspaceMonth(budget)}
+            </p>
+            <h1 ref={activeSectionRef} tabIndex="-1">
+              {selectedSection.title}
+            </h1>
+            <p>{selectedSection.summary}</p>
           </div>
+          {selectedSection.id === "overview" && (
+            <button
+              type="button"
+              onClick={() =>
+                handleSectionSelect(
+                  configured && categories.length ? "add-expense" : "budget",
+                )
+              }
+            >
+              <WorkspaceIcon name="plus" size={17} />
+              {configured && categories.length
+                ? "Add expense"
+                : "Set up budget"}
+            </button>
+          )}
+        </header>
+        {tabs.length > 0 && (
+          <nav
+            className="workspace-section-tabs"
+            aria-label={currentItem.label + " sections"}
+          >
+            {tabs.map((tab) => (
+              <button
+                type="button"
+                key={tab.id}
+                aria-current={
+                  selectedSection.id === tab.id ? "page" : undefined
+                }
+                onClick={() => handleSectionSelect(tab.id)}
+              >
+                {tab.title}
+              </button>
+            ))}
+          </nav>
+        )}
+        {content}
+      </main>
+    </div>
+  );
+}
+const WORKSPACE_GROUPS = [
+  {
+    title: "Workspace",
+    items: [
+      { label: "Overview", icon: "overview", sections: ["overview"] },
+      { label: "Budget", icon: "budget", sections: ["budget"] },
+      {
+        label: "Categories",
+        icon: "categories",
+        sections: ["categories", "add-category"],
+      },
+      {
+        label: "Expenses",
+        icon: "expenses",
+        sections: ["recent-expenses", "add-expense"],
+      },
+    ],
+  },
+  {
+    title: "Plan & understand",
+    items: [
+      {
+        label: "Savings & planning",
+        icon: "planning",
+        sections: ["monthly-planner", "spending-timetable", "can-i-buy"],
+      },
+      {
+        label: "Shopping lists",
+        icon: "shopping",
+        sections: ["shopping-list"],
+      },
+      {
+        label: "Analytics",
+        icon: "analytics",
+        sections: ["graphs", "monthly-insights"],
+      },
+      {
+        label: "AI & intelligence",
+        icon: "intelligence",
+        sections: [
+          "budget-intelligence",
+          "ai-recommendations",
+          "category-survival",
+          "alerts",
+        ],
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      {
+        label: "Notifications",
+        icon: "notifications",
+        sections: ["notifications"],
+      },
+      { label: "Profile & settings", icon: "profile", sections: ["profile"] },
+      {
+        label: "Administration",
+        icon: "admin",
+        sections: ["admin"],
+        admin: true,
+      },
+    ],
+  },
+];
+function WorkspaceNavigation({ active, user, notifications, onNavigate }) {
+  const unread = notifications.filter((item) => !item.is_read).length;
+  return (
+    <>
+      <Link
+        className="workspace-brand"
+        to="/app"
+        onClick={(event) => {
+          event.preventDefault();
+          onNavigate("overview");
+        }}
+      >
+        <span className="workspace-brand-mark">
+          a<span>i</span>
+        </span>
+        <span>
+          AllowanceAI<small>PERSONAL FINANCE</small>
+        </span>
+      </Link>
+      <nav aria-label="Financial workspace">
+        {WORKSPACE_GROUPS.map((group) => (
+          <section className="workspace-nav-group" key={group.title}>
+            <h2>{group.title}</h2>
+            {group.items
+              .filter((item) => !item.admin || user?.role === "admin")
+              .map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  aria-current={
+                    item.sections.includes(active) ? "page" : undefined
+                  }
+                  onClick={() => onNavigate(item.sections[0])}
+                >
+                  <WorkspaceIcon name={item.icon} />
+                  <span>{item.label}</span>
+                  {item.icon === "notifications" && unread > 0 && (
+                    <small className="workspace-nav-badge">{unread}</small>
+                  )}
+                </button>
+              ))}
+          </section>
+        ))}
+      </nav>
+      <div className="workspace-sidebar-account">
+        <span className="workspace-avatar">
+          {user?.name?.slice(0, 1).toUpperCase()}
+        </span>
+        <div>
+          <strong>{user?.name}</strong>
+          <small>Personal account</small>
         </div>
-        {selectedSection.content}
-      </section>
-    </main>
+      </div>
+    </>
+  );
+}
+function WorkspaceEmpty({ title, text, action, onAction }) {
+  return (
+    <section className="panel workspace-empty workspace-section-empty">
+      <WorkspaceIcon name="overview" size={32} />
+      <h2>{title}</h2>
+      <p>{text}</p>
+      {action && (
+        <button type="button" onClick={onAction}>
+          {action}
+        </button>
+      )}
+    </section>
   );
 }
 
@@ -360,7 +718,8 @@ function CategorySurvival({ intelligence }) {
             <div>
               <strong>{category.name}</strong>
               <span>
-                {category.priority} - {category.spending_pattern}, remaining {money(category.remaining_amount)}
+                {category.priority} - {category.spending_pattern}, remaining{" "}
+                {money(category.remaining_amount)}
               </span>
             </div>
             <span

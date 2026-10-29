@@ -20,16 +20,6 @@ def create_user(db: Session, user_data: schemas.UserCreate):
     db.add(user)
     db.commit()
     db.refresh(user)
-    from seed import seed_default_data
-
-    seed_default_data(db, user.id)
-    create_notification(
-        db,
-        user,
-        "Welcome to AllowanceAI",
-        "Your account is ready. Start by checking your default budget categories and adjusting them to match your month.",
-        "success",
-    )
     return user
 
 
@@ -127,6 +117,9 @@ def serialize_notification(notification: models.Notification) -> dict:
 
 
 def generate_budget_notifications(db: Session, user: models.User):
+    budget = get_current_budget(db, user)
+    if budget is None or (budget.allowance == 0 and get_total_spent(db, user) == 0):
+        return
     summary = get_budget_summary(db, user)
     categories = get_categories(db, user)
     intelligence = get_intelligence(db, user)
@@ -363,7 +356,7 @@ def get_monthly_insights(db: Session, user: models.User, notify: bool = True) ->
         },
     }
 
-    if notify:
+    if notify and budget and current_total_spent > 0:
         generate_insight_notifications(db, user, insights)
 
     return insights
@@ -418,7 +411,8 @@ def generate_insight_notifications(db: Session, user: models.User, insights: dic
 
 def get_notifications(db: Session, user: models.User) -> list[dict]:
     generate_budget_notifications(db, user)
-    generate_insight_notifications(db, user, get_monthly_insights(db, user, notify=False))
+    if get_current_budget(db, user) is not None and get_total_spent(db, user) > 0:
+        generate_insight_notifications(db, user, get_monthly_insights(db, user, notify=False))
     notifications = (
         db.query(models.Notification)
         .filter(models.Notification.user_id == user.id)
@@ -515,24 +509,31 @@ def delete_user_account(db: Session, user: models.User) -> dict:
 
 
 def create_budget(db: Session, budget: schemas.BudgetCreate, user: models.User):
-    db_budget = models.Budget(
-        month=budget.month,
-        allowance=budget.allowance,
-        savings_target=budget.savings_target,
-        user_id=user.id,
-    )
+    db_budget = get_current_budget(db, user, budget.month)
+    if db_budget is None:
+        db_budget = models.Budget(month=budget.month, user_id=user.id)
+    db_budget.allowance = budget.allowance
+    db_budget.savings_target = budget.savings_target
     db.add(db_budget)
     db.commit()
     db.refresh(db_budget)
     return db_budget
 
 
-def get_current_budget(db: Session, user: models.User):
-    return db.query(models.Budget).filter(models.Budget.user_id == user.id).order_by(models.Budget.id.desc()).first()
+def get_current_budget(db: Session, user: models.User, month: str | None = None):
+    month = month or date.today().strftime("%Y-%m")
+    return db.query(models.Budget).filter(
+        models.Budget.user_id == user.id, models.Budget.month == month
+    ).order_by(models.Budget.id.desc()).first()
 
 
-def get_total_spent(db: Session, user: models.User) -> float:
-    return db.query(func.coalesce(func.sum(models.Expense.amount), 0)).filter(models.Expense.user_id == user.id).scalar() or 0
+def get_total_spent(db: Session, user: models.User, month: str | None = None) -> float:
+    start, end = month_bounds(date.fromisoformat(f"{month}-01") if month else None)
+    return db.query(func.coalesce(func.sum(models.Expense.amount), 0)).filter(
+        models.Expense.user_id == user.id,
+        models.Expense.expense_date >= start,
+        models.Expense.expense_date <= end,
+    ).scalar() or 0
 
 
 def get_total_planned(db: Session, user: models.User) -> float:
@@ -572,10 +573,11 @@ def rebuild_behavior_tracking(db: Session, user: models.User):
 
 
 def get_behavior_metrics(db: Session, user: models.User) -> dict:
-    daily_logs = db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id).order_by(models.DailySpendingLog.spending_date.asc()).all()
+    start, end = month_bounds()
+    daily_logs = db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id, models.DailySpendingLog.spending_date >= start, models.DailySpendingLog.spending_date <= end).order_by(models.DailySpendingLog.spending_date.asc()).all()
     category_logs = (
         db.query(models.CategoryDailyTotal)
-        .filter(models.CategoryDailyTotal.user_id == user.id)
+        .filter(models.CategoryDailyTotal.user_id == user.id, models.CategoryDailyTotal.spending_date >= start, models.CategoryDailyTotal.spending_date <= end)
         .order_by(models.CategoryDailyTotal.category_name.asc(), models.CategoryDailyTotal.spending_date.asc())
         .all()
     )
@@ -635,7 +637,7 @@ def category_views_for_spend(categories: list[dict], category_spend: dict[str, f
     for category in categories:
         spent = round(category_spend.get(category["name"], 0), 2)
         remaining = round(category["planned_amount"] - spent, 2)
-        percentage = round((spent / category["planned_amount"] * 100) if category["planned_amount"] else 100, 2)
+        percentage = round((spent / category["planned_amount"] * 100) if category["planned_amount"] else (100 if spent > 0 else 0), 2)
         monthly_categories.append(
             {
                 **category,
@@ -674,29 +676,22 @@ def behavior_for_expenses(expenses: list[models.Expense]) -> dict:
     return {**raw_behavior, **decision_engine.behavior_summary(raw_behavior)}
 
 
-def get_budget_summary(db: Session, user: models.User) -> dict:
-    budget = get_current_budget(db, user)
-    if not budget:
-        return {
-            "allowance": 0,
-            "total_planned": 0,
-            "total_spent": 0,
-            "remaining_money": 0,
-            "savings_target": 0,
-            "budget_status": "warning",
-        }
-
+def get_budget_summary(db: Session, user: models.User, month: str | None = None) -> dict:
+    month = month or date.today().strftime("%Y-%m")
+    budget = get_current_budget(db, user, month)
+    allowance = budget.allowance if budget else 0
     total_planned = get_total_planned(db, user)
-    total_spent = get_total_spent(db, user)
-    remaining_money = budget.allowance - total_spent
-
+    total_spent = get_total_spent(db, user, month)
+    remaining_money = allowance - total_spent
     return {
-        "allowance": round(budget.allowance, 2),
+        "configured": budget is not None,
+        "month": month,
+        "allowance": round(allowance, 2),
         "total_planned": round(total_planned, 2),
         "total_spent": round(total_spent, 2),
         "remaining_money": round(remaining_money, 2),
-        "savings_target": round(budget.savings_target, 2),
-        "budget_status": decision_engine.get_budget_status(remaining_money, budget.allowance),
+        "savings_target": round(budget.savings_target if budget else 0, 2),
+        "budget_status": decision_engine.get_budget_status(remaining_money, allowance) if budget else "unconfigured",
     }
 
 
@@ -752,18 +747,19 @@ def delete_category(db: Session, category_id: int, user: models.User):
 
 
 def get_categories(db: Session, user: models.User) -> list[dict]:
+    start, end = month_bounds()
     categories = db.query(models.Category).filter(models.Category.user_id == user.id).order_by(models.Category.name.asc()).all()
     results = []
 
     for category in categories:
         spent = (
             db.query(func.coalesce(func.sum(models.Expense.amount), 0))
-            .filter(models.Expense.category_id == category.id, models.Expense.user_id == user.id)
+            .filter(models.Expense.category_id == category.id, models.Expense.user_id == user.id, models.Expense.expense_date >= start, models.Expense.expense_date <= end)
             .scalar()
             or 0
         )
         remaining = category.planned_amount - spent
-        percentage = (spent / category.planned_amount * 100) if category.planned_amount else 100
+        percentage = (spent / category.planned_amount * 100) if category.planned_amount else (100 if spent > 0 else 0)
         status = decision_engine.get_category_status(percentage, category.name, remaining)
 
         results.append(
@@ -856,8 +852,12 @@ def delete_expense(db: Session, expense_id: int, user: models.User):
     return {"message": "Expense deleted."}
 
 
-def get_expenses(db: Session, user: models.User) -> list[dict]:
-    expenses = db.query(models.Expense).filter(models.Expense.user_id == user.id).order_by(models.Expense.expense_date.desc(), models.Expense.id.desc()).all()
+def get_expenses(db: Session, user: models.User, month: str | None = None) -> list[dict]:
+    query = db.query(models.Expense).filter(models.Expense.user_id == user.id)
+    if month:
+        start, end = month_bounds(date.fromisoformat(f"{month}-01"))
+        query = query.filter(models.Expense.expense_date >= start, models.Expense.expense_date <= end)
+    expenses = query.order_by(models.Expense.expense_date.desc(), models.Expense.id.desc()).all()
     return [
         {
             "id": expense.id,
@@ -1025,7 +1025,7 @@ def get_timetable(db: Session, user: models.User) -> dict:
 def get_monthly_report(db: Session, user: models.User) -> dict:
     summary = get_budget_summary(db, user)
     categories = get_categories(db, user)
-    expenses = get_expenses(db, user)
+    expenses = get_expenses(db, user, date.today().strftime("%Y-%m"))
     intelligence = get_intelligence(db, user)
     top_expenses = sorted(expenses, key=lambda expense: expense["amount"], reverse=True)[:5]
     overspending_categories = [

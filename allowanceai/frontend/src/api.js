@@ -20,12 +20,13 @@ export function getAuthToken() {
 }
 
 async function request(path, options = {}) {
+  const requestToken = authToken;
   let response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
         "Content-Type": "application/json",
-        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...(requestToken ? { Authorization: `Bearer ${requestToken}` } : {}),
         ...(options.headers || {}),
       },
       ...options,
@@ -47,8 +48,10 @@ async function request(path, options = {}) {
       throw new Error("Invalid email or password.");
     }
     if (response.status === 401) {
-      setAuthToken("");
-      window.dispatchEvent(new Event("allowanceai:session-expired"));
+      if (authToken === requestToken) {
+        setAuthToken("");
+        window.dispatchEvent(new Event("allowanceai:session-expired"));
+      }
       const expired = new Error("Your session expired. Please log in again.");
       expired.status = 401;
       throw expired;
@@ -127,8 +130,10 @@ export function deleteMyAccount() {
   });
 }
 
-export function getBudget() {
-  return request("/api/budget");
+export function getBudget(month) {
+  return request(
+    `/api/budget${month ? `?month=${encodeURIComponent(month)}` : ""}`,
+  );
 }
 
 export function createBudget(data) {
