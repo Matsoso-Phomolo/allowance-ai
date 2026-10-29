@@ -20,6 +20,7 @@ DEFAULT_FRONTEND_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://allowance-ai.onrender.com",
+    "https://allowance-ai-omega.vercel.app",
 ]
 frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 allowed_origins = DEFAULT_FRONTEND_ORIGINS + ([frontend_url] if frontend_url else [])

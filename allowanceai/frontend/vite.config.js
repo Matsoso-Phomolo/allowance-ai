@@ -1,8 +1,12 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL("./public/version.json", import.meta.url), "utf8")).version),
+  },
   build: {
     rollupOptions: {
       output: {

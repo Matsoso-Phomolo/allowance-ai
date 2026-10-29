@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import PublicSite from "./components/PublicSite";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   addExpense,
@@ -46,9 +48,28 @@ import Login from "./components/Login";
 import NotificationCenter from "./components/NotificationCenter";
 import Register from "./components/Register";
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.7";
+const APP_VERSION = __APP_VERSION__;
 
 export default function App() {
+  const logoutRequested = useRef(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isApp =
+    location.pathname === "/app" || location.pathname.startsWith("/app/");
+  const isAuth = ["/login", "/register"].includes(location.pathname);
+  const destination = new URLSearchParams(location.search).get("next");
+  const safeDestination = /^\/app(?:\/[a-z-]+)*$/.test(destination || "")
+    ? destination
+    : "/app";
+  useEffect(() => {
+    const expire = () => {
+      setUser(null);
+      setLoading(false);
+    };
+    window.addEventListener("allowanceai:session-expired", expire);
+    return () =>
+      window.removeEventListener("allowanceai:session-expired", expire);
+  }, []);
   const [budget, setBudget] = useState(null);
   const [categories, setCategories] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -64,7 +85,7 @@ export default function App() {
   const [adminHealth, setAdminHealth] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [backendReachable, setBackendReachable] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
+
   const [user, setUser] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -158,8 +179,9 @@ export default function App() {
       try {
         const me = await getMe();
         setUser(me);
-      } catch {
-        setAuthToken("");
+      } catch (err) {
+        if (err.status === 401) setAuthToken("");
+        setError(err.message);
       } finally {
         setAuthChecked(true);
       }
@@ -196,7 +218,9 @@ export default function App() {
 
     async function checkForUpdate() {
       try {
-        const response = await fetch(`/version.json?ts=${Date.now()}`, { cache: "no-store" });
+        const response = await fetch(`/version.json?ts=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (!response.ok) {
           return;
         }
@@ -236,11 +260,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && isApp) {
       setLoading(true);
       loadDashboard();
     }
-  }, [user, loadDashboard]);
+  }, [user, isApp, loadDashboard]);
 
   useEffect(() => {
     if (user?.role === "admin") {
@@ -257,18 +281,23 @@ export default function App() {
   }, [user, loadNotifications]);
 
   async function handleLogin(credentials) {
+    logoutRequested.current = false;
     const response = await loginUser(credentials);
     setAuthToken(response.access_token);
     setUser(response.user);
+    navigate(safeDestination, { replace: true });
   }
 
   async function handleRegister(data) {
+    logoutRequested.current = false;
     const response = await registerUser(data);
     setAuthToken(response.access_token);
     setUser(response.user);
+    navigate(safeDestination, { replace: true });
   }
 
   function handleLogout() {
+    logoutRequested.current = true;
     setAuthToken("");
     setUser(null);
     setBudget(null);
@@ -284,7 +313,7 @@ export default function App() {
     setAdminUsers([]);
     setAdminHealth(null);
     setNotifications([]);
-    setAuthMode("login");
+    navigate("/", { replace: true });
   }
 
   async function handleAddExpense(expense) {
@@ -335,7 +364,9 @@ export default function App() {
 
   async function handleExportData() {
     const data = await exportMyData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -351,65 +382,89 @@ export default function App() {
 
   async function handleMarkNotificationRead(id) {
     const updated = await markNotificationRead(id);
-    setNotifications((current) => current.map((notification) => (
-      notification.id === id ? updated : notification
-    )));
+    setNotifications((current) =>
+      current.map((notification) =>
+        notification.id === id ? updated : notification,
+      ),
+    );
   }
 
   async function handleMarkAllNotificationsRead() {
     await markAllNotificationsRead();
-    setNotifications((current) => current.map((notification) => ({ ...notification, is_read: true })));
+    setNotifications((current) =>
+      current.map((notification) => ({ ...notification, is_read: true })),
+    );
   }
 
   async function handleDeleteNotification(id) {
     await deleteNotification(id);
-    setNotifications((current) => current.filter((notification) => notification.id !== id));
+    setNotifications((current) =>
+      current.filter((notification) => notification.id !== id),
+    );
   }
 
   async function handleSaveShoppingList(data) {
     const saved = await createShoppingList(data);
-    setSavedShoppingLists((current) => [saved, ...current.filter((list) => list.id !== saved.id)]);
+    setSavedShoppingLists((current) => [
+      saved,
+      ...current.filter((list) => list.id !== saved.id),
+    ]);
     await loadNotifications();
     return saved;
   }
 
   async function handleUpdateShoppingList(id, data) {
     const updated = await updateShoppingList(id, data);
-    setSavedShoppingLists((current) => current.map((list) => (list.id === id ? updated : list)));
+    setSavedShoppingLists((current) =>
+      current.map((list) => (list.id === id ? updated : list)),
+    );
     return updated;
   }
 
   async function handleDeleteShoppingList(id) {
     await deleteShoppingList(id);
-    setSavedShoppingLists((current) => current.filter((list) => list.id !== id));
-  }
-
-  if (!authChecked || loading && user) {
-    return (
-      <SplashScreen />
+    setSavedShoppingLists((current) =>
+      current.filter((list) => list.id !== id),
     );
   }
 
-  if (!user) {
+  if (!isApp && !isAuth)
     return (
-      authMode === "register" ? (
-        <Register
-          onRegister={handleRegister}
-          onShowLogin={() => setAuthMode("login")}
-          offlineNotice={!isOnline ? <OfflineBanner /> : null}
-          updateNotice={updateAvailable ? <UpdateBanner /> : null}
-        />
-      ) : (
-        <Login
-          onLogin={handleLogin}
-          onShowRegister={() => setAuthMode("register")}
-          offlineNotice={!isOnline ? <OfflineBanner /> : null}
-          updateNotice={updateAvailable ? <UpdateBanner /> : null}
-        />
-      )
+      <>
+        {updateAvailable && <UpdateBanner />}
+        {!isOnline && <OfflineBanner />}
+        <PublicSite user={user} onLogout={handleLogout} />
+      </>
+    );
+  if (!authChecked) return <SplashScreen />;
+  if (isAuth && user) return <Navigate to={safeDestination} replace />;
+  if (isApp && !user)
+    return (
+      <Navigate
+        to={logoutRequested.current ? "/" : `/login?next=${encodeURIComponent(location.pathname)}`}
+        replace
+      />
+    );
+  if (isAuth) {
+    const shared = {
+      offlineNotice: !isOnline ? <OfflineBanner /> : null,
+      updateNotice: updateAvailable ? <UpdateBanner /> : null,
+    };
+    return location.pathname === "/register" ? (
+      <Register
+        {...shared}
+        onRegister={handleRegister}
+        onShowLogin={() => navigate(`/login${location.search}`)}
+      />
+    ) : (
+      <Login
+        {...shared}
+        onLogin={handleLogin}
+        onShowRegister={() => navigate(`/register${location.search}`)}
+      />
     );
   }
-
+  if (loading && user) return <SplashScreen />;
   return (
     <div className="app-shell">
       {updateAvailable && <UpdateBanner />}
@@ -418,8 +473,13 @@ export default function App() {
         <div>
           <h1>AllowanceAI</h1>
         </div>
-        <p className="header-summary">Monthly allowance, spending, savings, data, mokhatlo, and everyday budget control.</p>
+        <p className="header-summary">
+          Monthly allowance, spending, savings, data, mokhatlo, and everyday
+          budget control.
+        </p>
         <div className="user-menu">
+          <Link to="/">Home</Link>
+          <Link to="/help">Help</Link>
           <span>{user.name}</span>
           <NotificationCenter
             notifications={notifications}
@@ -427,46 +487,60 @@ export default function App() {
             onMarkAllRead={handleMarkAllNotificationsRead}
             onMarkRead={handleMarkNotificationRead}
           />
-          <button className="logout-button" type="button" onClick={handleLogout}>
+          <button
+            className="logout-button"
+            type="button"
+            onClick={handleLogout}
+          >
             Logout
           </button>
         </div>
       </header>
 
-      {error && <div className="notice danger">{error}</div>}
+      {error && (
+        <div role="alert" className="notice danger">
+          {error}{" "}
+          <button type="button" onClick={loadDashboard}>
+            Retry
+          </button>
+        </div>
+      )}
       <Dashboard
-          alerts={alerts}
-          adminHealth={adminHealth}
-          adminStats={adminStats}
-          adminUsers={adminUsers}
-          budget={budget}
-          canIBuy={canIBuy}
-          categories={categories}
-          createMonthlyPlan={createMonthlyPlan}
-          evaluateList={evaluateList}
-          expenses={expenses}
-          intelligence={intelligence}
-          monthlyReport={monthlyReport}
-          monthlyInsights={monthlyInsights}
-          onAddCategory={handleAddCategory}
-          onDeleteCategory={handleDeleteCategory}
-          onDeleteExpense={handleDeleteExpense}
-          onDeleteShoppingList={handleDeleteShoppingList}
-          onAddExpense={handleAddExpense}
-          onSaveShoppingList={handleSaveShoppingList}
-          onSaveBudget={handleSaveBudget}
-          onUpdateCategory={handleUpdateCategory}
-          onUpdateExpense={handleUpdateExpense}
-          onUpdateShoppingList={handleUpdateShoppingList}
-          onUpdatePassword={handleUpdatePassword}
-          onUpdateProfile={handleUpdateProfile}
-          onExportData={handleExportData}
-          onDeleteAccount={handleDeleteAccount}
-          savedShoppingLists={savedShoppingLists}
-          timetable={timetable}
-          user={user}
-        />
-      <footer className="app-footer">AllowanceAI | Produced by Matsoso P</footer>
+        alerts={alerts}
+        adminHealth={adminHealth}
+        adminStats={adminStats}
+        adminUsers={adminUsers}
+        budget={budget}
+        canIBuy={canIBuy}
+        categories={categories}
+        createMonthlyPlan={createMonthlyPlan}
+        evaluateList={evaluateList}
+        expenses={expenses}
+        intelligence={intelligence}
+        monthlyReport={monthlyReport}
+        monthlyInsights={monthlyInsights}
+        onAddCategory={handleAddCategory}
+        onDeleteCategory={handleDeleteCategory}
+        onDeleteExpense={handleDeleteExpense}
+        onDeleteShoppingList={handleDeleteShoppingList}
+        onAddExpense={handleAddExpense}
+        onSaveShoppingList={handleSaveShoppingList}
+        onSaveBudget={handleSaveBudget}
+        onUpdateCategory={handleUpdateCategory}
+        onUpdateExpense={handleUpdateExpense}
+        onUpdateShoppingList={handleUpdateShoppingList}
+        onUpdatePassword={handleUpdatePassword}
+        onUpdateProfile={handleUpdateProfile}
+        onExportData={handleExportData}
+        onDeleteAccount={handleDeleteAccount}
+        savedShoppingLists={savedShoppingLists}
+        timetable={timetable}
+        user={user}
+      />
+      <footer className="app-footer">
+        AllowanceAI · Independently developed by{" "}
+        <a href="https://matsoso.dev/">Matsoso Phomolo</a>
+      </footer>
     </div>
   );
 }

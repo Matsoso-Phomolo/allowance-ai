@@ -1,6 +1,8 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://allowanceai-backend.onrender.com" : "http://127.0.0.1:8000");
+  (import.meta.env.PROD
+    ? "https://allowanceai-backend.onrender.com"
+    : "http://127.0.0.1:8000");
 
 let authToken = localStorage.getItem("allowanceai_token") || "";
 
@@ -32,25 +34,44 @@ async function request(path, options = {}) {
     if (!navigator.onLine) {
       throw new Error("You are offline. Reconnect and try again.");
     }
-    throw new Error("Backend unavailable. Please try again in a moment.");
+    throw new Error(
+      "Could not connect. Check your connection and try again. If this continues, the service or browser connection settings may need attention.",
+    );
   }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: "Request failed" }));
+    const error = await response
+      .json()
+      .catch(() => ({ detail: "Request failed" }));
     if (response.status === 401 && path === "/api/auth/login") {
       throw new Error("Invalid email or password.");
     }
     if (response.status === 401) {
       setAuthToken("");
-      throw new Error("Your session expired. Please log in again.");
+      window.dispatchEvent(new Event("allowanceai:session-expired"));
+      const expired = new Error("Your session expired. Please log in again.");
+      expired.status = 401;
+      throw expired;
     }
     if (response.status === 403) {
       throw new Error("You do not have permission to access this feature.");
     }
     if (response.status === 400 && /email already/i.test(error.detail || "")) {
-      throw new Error("That email is already registered. Use login or another email.");
+      throw new Error(
+        "That email is already registered. Use login or another email.",
+      );
     }
-    throw new Error(error.detail || "Request failed. Please check your details and try again.");
+    if (response.status >= 500)
+      throw new Error(
+        "The service could not complete your request. Try again shortly.",
+      );
+    if (response.status === 422)
+      throw new Error("Please check the entered values and try again.");
+    throw new Error(
+      typeof error.detail === "string"
+        ? error.detail
+        : "Request failed. Please check your details.",
+    );
   }
 
   return response.json();

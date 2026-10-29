@@ -1,3 +1,4 @@
+import { useLocation, useNavigate } from "react-router-dom";
 import { Suspense, lazy, useRef, useState } from "react";
 
 import AlertsPanel from "./AlertsPanel";
@@ -50,7 +51,20 @@ export default function Dashboard({
   timetable,
   user,
 }) {
-  const [activeSection, setActiveSection] = useState("budget");
+  const [mobileNavigation, setMobileNavigation] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const aliases = {
+    dashboard: "budget",
+    budgets: "budget",
+    transactions: "recent-expenses",
+    savings: "budget",
+    shopping: "shopping-list",
+    reports: "graphs",
+    settings: "profile",
+  };
+  const routeSection = location.pathname.split("/")[2] || "budget";
+  const activeSection = aliases[routeSection] || routeSection;
   const activeSectionRef = useRef(null);
   const dashboardSections = [
     {
@@ -88,7 +102,9 @@ export default function Dashboard({
       id: "add-expense",
       title: "Add Expense",
       summary: "Record new spending.",
-      content: <ExpenseForm categories={categories} onAddExpense={onAddExpense} />,
+      content: (
+        <ExpenseForm categories={categories} onAddExpense={onAddExpense} />
+      ),
     },
     {
       id: "add-category",
@@ -136,7 +152,12 @@ export default function Dashboard({
       id: "ai-recommendations",
       title: "AI Recommendations",
       summary: "Rule-based advice for this month.",
-      content: <AIRecommendations intelligence={intelligence} monthlyInsights={monthlyInsights} />,
+      content: (
+        <AIRecommendations
+          intelligence={intelligence}
+          monthlyInsights={monthlyInsights}
+        />
+      ),
     },
     {
       id: "budget-intelligence",
@@ -149,7 +170,9 @@ export default function Dashboard({
       title: "Monthly Insights",
       summary: "Behavior patterns and changes this month.",
       content: (
-        <Suspense fallback={<SectionSkeleton title="Loading monthly insights" />}>
+        <Suspense
+          fallback={<SectionSkeleton title="Loading monthly insights" />}
+        >
           <MonthlyInsights insights={monthlyInsights} />
         </Suspense>
       ),
@@ -198,28 +221,66 @@ export default function Dashboard({
       ),
     },
   ];
-  const selectedSection = dashboardSections.find((section) => section.id === activeSection) || dashboardSections[0];
+  const validSection = dashboardSections.some(
+    (section) => section.id === activeSection,
+  );
+  const selectedSection =
+    dashboardSections.find((section) => section.id === activeSection) ||
+    dashboardSections[0];
 
   function handleSectionSelect(sectionId) {
-    setActiveSection(sectionId);
+    navigate(`/app/${sectionId}`);
+    setMobileNavigation(false);
     window.requestAnimationFrame(() => {
-      activeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      activeSectionRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
     });
   }
 
   return (
     <main className="dashboard">
       <BudgetCards budget={budget} />
+      {!validSection && (
+        <div role="status" className="notice">
+          That section is unavailable. Choose a section from the navigation.
+        </div>
+      )}
       {user?.role === "admin" && (
-        <Suspense fallback={<SectionSkeleton title="Loading admin dashboard" />}>
-          <AdminDashboard health={adminHealth} stats={adminStats} users={adminUsers} />
+        <Suspense
+          fallback={<SectionSkeleton title="Loading admin dashboard" />}
+        >
+          <AdminDashboard
+            health={adminHealth}
+            stats={adminStats}
+            users={adminUsers}
+          />
         </Suspense>
       )}
 
-      <section className="dashboard-navigator" aria-label="Dashboard sections">
+      <button
+        className="dashboard-nav-toggle"
+        type="button"
+        aria-expanded={mobileNavigation}
+        aria-controls="dashboard-navigation"
+        onClick={() => setMobileNavigation(!mobileNavigation)}
+      >
+        Workspace menu · {selectedSection.title}
+      </button>
+      <section
+        id="dashboard-navigation"
+        className={`dashboard-navigator ${mobileNavigation ? "mobile-open" : ""}`}
+        aria-label="Dashboard sections"
+      >
         {dashboardSections.map((section) => (
           <button
             className={`dashboard-nav-button ${section.id === selectedSection.id ? "active" : ""}`}
+            aria-current={
+              section.id === selectedSection.id ? "page" : undefined
+            }
             key={section.id}
             type="button"
             onClick={() => handleSectionSelect(section.id)}
@@ -230,7 +291,11 @@ export default function Dashboard({
         ))}
       </section>
 
-      <section className="active-dashboard-section" aria-live="polite" ref={activeSectionRef}>
+      <section
+        className="active-dashboard-section"
+        aria-live="polite"
+        ref={activeSectionRef}
+      >
         <div className="active-section-heading">
           <div>
             <p className="eyebrow">Selected section</p>
@@ -247,13 +312,17 @@ function AIRecommendations({ intelligence, monthlyInsights }) {
   const recommendations = [
     ...(monthlyInsights?.recommendations || []),
     ...(intelligence?.recommendations || []),
-  ].filter((recommendation, index, list) => list.indexOf(recommendation) === index);
+  ].filter(
+    (recommendation, index, list) => list.indexOf(recommendation) === index,
+  );
 
   return (
     <section className="panel intelligence-panel">
       <div className="panel-heading">
         <h2>AI Recommendations</h2>
-        <span>{intelligence?.budget_health || monthlyInsights?.status || "SAFE"}</span>
+        <span>
+          {intelligence?.budget_health || monthlyInsights?.status || "SAFE"}
+        </span>
       </div>
       <div className="recommendation-list">
         {recommendations.length ? (
@@ -294,7 +363,9 @@ function CategorySurvival({ intelligence }) {
                 {Number(category.remaining_amount).toFixed(2)}
               </span>
             </div>
-            <span className={`pill ${String(category.survival_status).toLowerCase()}`}>
+            <span
+              className={`pill ${String(category.survival_status).toLowerCase()}`}
+            >
               {category.survival_status} {category.risk_score}/100
             </span>
           </article>
