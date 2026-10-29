@@ -1,12 +1,18 @@
 import { useState } from "react";
 
-export default function PasswordInput({ value, onChange, placeholder, minLength }) {
+export default function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  minLength,
+}) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className="password-input-wrap">
       <input
         minLength={minLength}
+        autoComplete={minLength ? "new-password" : "current-password"}
         required
         type={visible ? "text" : "password"}
         value={value}
@@ -14,6 +20,7 @@ export default function PasswordInput({ value, onChange, placeholder, minLength 
         placeholder={placeholder}
       />
       <button
+        aria-pressed={visible}
         aria-label={visible ? "Hide password" : "Show password"}
         className="icon-button password-toggle"
         type="button"
