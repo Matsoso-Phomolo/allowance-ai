@@ -734,6 +734,7 @@ export default function App() {
       )}
 
       <Dashboard
+        onRefresh={loadDashboard}
         notifications={notifications}
 
         onMarkNotificationRead={handleMarkNotificationRead}

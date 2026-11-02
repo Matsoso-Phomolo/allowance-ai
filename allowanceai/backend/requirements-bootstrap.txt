@@ -1,0 +1,3 @@
+# Install before resolving application dependencies; no audit tools in production.
+pip==26.2.2
+setuptools==84.2.1

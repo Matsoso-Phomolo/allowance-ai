@@ -1,37 +1,50 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Annotated
+from decimal import Decimal
+from pydantic import AfterValidator
+from finance import valid_money
+MoneyInput = Annotated[Decimal, AfterValidator(valid_money)]
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, field_serializer
+
+
+class MoneyResponse(BaseModel):
+    @field_serializer('*', when_used='json')
+    def exact_decimal(self, value):
+        return format(value, 'f') if isinstance(value, Decimal) else value
 
 
 class BudgetCreate(BaseModel):
     month: str = Field(..., pattern=r"^[1-9][0-9]{3}-(0[1-9]|1[0-2])$", examples=["2026-05"])
-    allowance: float = Field(..., ge=0)
-    savings_target: float = Field(0, ge=0)
+    allowance: MoneyInput = Field(..., ge=0)
+    savings_target: MoneyInput = Field(0, ge=0)
 
 
-class BudgetSummary(BaseModel):
+class BudgetSummary(MoneyResponse):
     configured: bool = False
     month: str | None = None
-    allowance: float
-    total_planned: float
-    total_spent: float
-    remaining_money: float
-    savings_target: float
+    allowance: Decimal
+    total_planned: Decimal
+    total_spent: Decimal
+    remaining_money: Decimal
+    savings_target: Decimal
     budget_status: str
 
 
 class CategoryCreate(BaseModel):
+    month: str | None = Field(None, pattern=r"^[1-9][0-9]{3}-(0[1-9]|1[0-2])$")
     name: str = Field(..., min_length=1)
-    planned_amount: float = Field(..., ge=0)
+    planned_amount: MoneyInput = Field(..., ge=0)
 
 
-class CategoryResponse(BaseModel):
+class CategoryResponse(MoneyResponse):
+    month: str | None = None
+    allocation_origin: str | None = None
     id: int
     name: str
-    planned_amount: float
-    spent_amount: float
-    remaining_amount: float
+    planned_amount: Decimal
+    spent_amount: Decimal
+    remaining_amount: Decimal
     percentage_used: float
     status: str
     status_label: str | None = None
@@ -41,30 +54,33 @@ class CategoryResponse(BaseModel):
 
 
 class ExpenseCreate(BaseModel):
+    operation_key: str | None = Field(None, min_length=8, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
     item_name: str = Field(..., min_length=1)
-    amount: float = Field(..., gt=0)
+    amount: MoneyInput = Field(..., gt=0)
     category_name: str = Field(..., min_length=1)
     expense_date: Optional[date] = None
 
 
-class ExpenseResponse(BaseModel):
+class ExpenseResponse(MoneyResponse):
+    purchase_event_id: int | None = None
+    originating_item_id: int | None = None
     id: int
     item_name: str
-    amount: float
+    amount: Decimal
     category_name: str
     expense_date: date
 
 
 class CanIBuyRequest(BaseModel):
     item_name: str = Field(..., min_length=1)
-    amount: float = Field(..., gt=0)
+    amount: MoneyInput = Field(..., gt=0)
     category_name: str = Field(..., min_length=1)
 
 
-class CanIBuyResponse(BaseModel):
+class CanIBuyResponse(MoneyResponse):
     approved: bool
-    money_after_purchase: float
-    category_after_purchase: float
+    money_after_purchase: Decimal
+    category_after_purchase: Decimal
     advice: str
     status: str | None = None
     confidence: float | None = None
@@ -75,14 +91,14 @@ class CanIBuyResponse(BaseModel):
 
 
 class FixedCommitments(BaseModel):
-    data_bundles: float = Field(
+    data_bundles: MoneyInput = Field(
         0,
         ge=0,
         validation_alias=AliasChoices("Data Bundles", "Econet Data"),
         serialization_alias="Data Bundles",
     )
-    mokhatlo: float = Field(0, ge=0, alias="Mokhatlo")
-    savings: float = Field(0, ge=0, alias="Savings")
+    mokhatlo: MoneyInput = Field(0, ge=0, alias="Mokhatlo")
+    savings: MoneyInput = Field(0, ge=0, alias="Savings")
 
 
 class UserPreferences(BaseModel):
@@ -92,7 +108,7 @@ class UserPreferences(BaseModel):
 
 
 class MonthlyPlanRequest(BaseModel):
-    allowance: float = Field(..., gt=0)
+    allowance: MoneyInput = Field(..., gt=0)
     month: str
     fixed_commitments: FixedCommitments
     user_preferences: UserPreferences
@@ -100,7 +116,7 @@ class MonthlyPlanRequest(BaseModel):
 
 class ShoppingListItem(BaseModel):
     item_name: str = Field(..., min_length=1)
-    amount: float = Field(..., gt=0)
+    amount: MoneyInput = Field(..., gt=0)
     category_name: str = Field(..., min_length=1)
 
 
@@ -110,14 +126,14 @@ class ShoppingListRequest(BaseModel):
 
 class ShoppingListItemCreate(BaseModel):
     item_name: str = Field(..., min_length=1)
-    amount: float = Field(..., gt=0)
+    amount: MoneyInput = Field(..., gt=0)
     category_name: str = Field(..., min_length=1)
 
 
-class ShoppingListItemResponse(BaseModel):
+class ShoppingListItemResponse(MoneyResponse):
     id: int
     item_name: str
-    amount: float
+    amount: Decimal
     category_name: str
     created_at: datetime
 
@@ -135,10 +151,10 @@ class ShoppingListUpdate(BaseModel):
     items: list[ShoppingListItemCreate] | None = Field(None, min_length=1)
 
 
-class ShoppingListResponse(BaseModel):
+class ShoppingListResponse(MoneyResponse):
     id: int
     name: str
-    total_cost: float
+    total_cost: Decimal
     approved: bool
     advice: str
     created_at: datetime

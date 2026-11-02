@@ -24,7 +24,7 @@ export default function CategoryForm({ onAddCategory }) {
       await onAddCategory({
         name: form.name,
 
-        planned_amount: Number(form.planned_amount),
+        planned_amount: form.planned_amount,
       });
 
       setForm({ name: "", planned_amount: "" });

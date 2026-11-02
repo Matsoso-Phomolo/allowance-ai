@@ -1,0 +1,1185 @@
+{
+  "base_revision": "ca094173e2d8fd99cf03ae7e353d491b92ccef4a",
+  "branch": "codex/phase8-release-candidate-20261030",
+  "dirty": true,
+  "note": "Uncommitted Phase 9 candidate; self and final report excluded to avoid circular hashing. Earlier source manifests remain historical.",
+  "changes": [
+    {
+      "status": " M",
+      "path": "allowanceai/README.md"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/crud.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/database.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/decision_engine.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/main.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/models.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/requirements.txt"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/schemas.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/tests/run_local_postgres.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/backend/tests/test_workspace.py"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/docs/workspace-overview-desktop.png"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/docs/workspace-overview-mobile.png"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/.env.example"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/package-lock.json"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/package.json"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/public/sw.js"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/public/version.json"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/App.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/api.js"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/BudgetForm.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/CanIBuy.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/CategoryForm.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/CategoryList.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/Dashboard.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/ExpenseForm.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/ExpenseHistory.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/MonthlyPlanner.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/MonthlyReport.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/ShoppingListEvaluator.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/components/WorkspaceOverview.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/currency.js"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/src/main.jsx"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/tests/currency.test.cjs"
+    },
+    {
+      "status": " M",
+      "path": "allowanceai/frontend/tests/workspace-e2e.cjs"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/DATABASE-VERIFICATION-RUNBOOK.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/INTELLIGENT-BUDGETING-PLAN.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/INTELLIGENT-BUDGETING-REPORT.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/ITEM-LEDGER-DEPLOYMENT.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/PHASE9-BACKEND-AUDIT.json"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/PHASE9-RELEASE-GATES.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/PHASE9-SOURCE-MANIFEST.json"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/PHASE9-TOOLING-AUDIT.json"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/PRODUCTION-READINESS-AUDIT.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/READINESS-REMEDIATION.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/RELEASE-CANDIDATE-BACKEND-AUDIT.json"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/RELEASE-CANDIDATE-PYTHON-DEPENDENCIES.txt"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/RELEASE-CANDIDATE-SOURCE-MANIFEST.json"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/RELEASE-CANDIDATE-VERIFICATION.md"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/PHASE9-PYTHON-DEPENDENCIES.txt"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/PHASE9-TOOLING-DEPENDENCIES.txt"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/alembic.ini"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/allocation_models.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/category_engine.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/finance.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/inspect_schema_readonly.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/item_models.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/item_routes.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/item_schemas.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/item_service.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/allocation_schema.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/env.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/item_schema.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/legacy_schema.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/validation.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/versions/0001_legacy.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/versions/0002_item_ledger.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/migrations/versions/0003_month_allocations.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/readiness_snapshot.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/requirements-bootstrap.txt"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/requirements-tooling.txt"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/tests/test_adoption.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/tests/test_item_migrations.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/tests/test_items.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/tests/test_readonly_inspection.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/backend/tests/test_remediation.py"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/docs/items-monthly-desktop.png"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/docs/items-monthly-mobile.png"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/frontend/src/components/ItemAnalytics.jsx"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/frontend/src/components/ItemWorkspace.jsx"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/frontend/src/items.css"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/frontend/tests/items-e2e.cjs"
+    },
+    {
+      "status": "??",
+      "path": "allowanceai/frontend/tests/remediation-e2e.cjs"
+    }
+  ],
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "eb58651c204186e63ee87081fa2946f3e424aa1caab870646647a975891c9e66",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": ".python-version",
+      "sha256": "61141e9590171b900fdf709e7ea8f050d5c2a69198d4a4a1977d7c45186307e5",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/.gitignore",
+      "sha256": "eb58651c204186e63ee87081fa2946f3e424aa1caab870646647a975891c9e66",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/.python-version",
+      "sha256": "61141e9590171b900fdf709e7ea8f050d5c2a69198d4a4a1977d7c45186307e5",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/ai_rules.py",
+      "sha256": "20815faed137f07bebc73bc9548a07487cf6a5c38b9394ccc0dda28fb2544bab",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/alembic.ini",
+      "sha256": "f495bfc860794338c6c70aa7cba0abfa896fdef834c60ec5eaaef589752c74fc",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/allocation_models.py",
+      "sha256": "5cc89c47552f4ab79837f8ddc0c4093444440e36d3c713caab8a6bc5f0f01268",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/auth.py",
+      "sha256": "e9db272e4f4e049825ea68411d8a022a13c61acebcea5e4376b22285e08e6cc8",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/category_engine.py",
+      "sha256": "fb043b6f3d59463d1dda62b498b29b5fbafe6cef3f7e3242961f1fe350d7637d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/crud.py",
+      "sha256": "65790c5f1f2063787c18a48cac1add503e8e619c97787e399e932ddf51027c5e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/database.py",
+      "sha256": "3efdb579875836889b4e9ec509868f81d9d1b34a45674d263f3178872079e70f",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/decision_engine.py",
+      "sha256": "8211c739b3d23610903af3faeaf059718b88c0da0d5d09ed64893f941f5ccceb",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/export_user_data.py",
+      "sha256": "ddfbaf1391bd1e45d423c5b5d975a36bd573569d4880770cbaa3e754d9c70c82",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/finance.py",
+      "sha256": "c9dee6bd9182716ae165d794e158d715fbc2cf4ef48d098ffa299b133cb47d5e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/inspect_schema_readonly.py",
+      "sha256": "56c5ded186b52830ae6113abad309eeed406aebb98e2fde918f6d8f1aa66c745",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/item_models.py",
+      "sha256": "2633d180e25eb6892e75615a7f7869e218b3a5e5231b338543d08d67fe9ab010",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/item_routes.py",
+      "sha256": "2882ff41f913a16c16ae917935ac20cf76d3d75ca9099b25be6485d187b78366",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/item_schemas.py",
+      "sha256": "58a93cfd0e4f82c4d01e2561c19c95a1a82abaf23fce283daee42a4cc209351c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/item_service.py",
+      "sha256": "de21cd6ac50161b11ebc7b2fcff974a929b056778a20cec5fa70dd00fff7f0df",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/main.py",
+      "sha256": "c9ec0d9d0c0ea5de87716bd2011a93f8188a97ba70a1a126f2ed740a1df7f44c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrate_postgres_to_render.py",
+      "sha256": "7183f46cca99026b1f80ae3f6e6e76fc25723a1918f1e2abb084eaef2e13d947",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrate_sqlite_to_postgres.py",
+      "sha256": "a067fd361fb39907e2d93d2d02a5982192515fbcf0aecfd45989cbfdc4291d49",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/allocation_schema.py",
+      "sha256": "b62f0e07c9d3763feae03277a6db524fc01c1096cf5c449c75bb0847ad53bab8",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/env.py",
+      "sha256": "b96ecaed893b7ef82879ecce4ea50af98778f877e1efcf10978071aa6f0ca07c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/item_schema.py",
+      "sha256": "ac643c6aea50b81cd6ffbd26b67b5e4856aa1d0bdad9a7a6729814642ee1978b",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/legacy_schema.py",
+      "sha256": "e706bfff3712cb35283f61965c17bf047a6b397a1d752321e579064dc706697d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/validation.py",
+      "sha256": "755a8f1c6ba79016411f27de45a3cdf7c3bd8156fc0557fa9c656d82800b0071",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/versions/0001_legacy.py",
+      "sha256": "eee29ad0a733098dcb4a5084b760fbcfea75d9fec1fbdabee77ffd6d2d828737",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/versions/0002_item_ledger.py",
+      "sha256": "a41d796bce972ac61c53cff733ce2219910d7cd72fdbf375fd85b4255223f19c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/migrations/versions/0003_month_allocations.py",
+      "sha256": "9f1e5c6f95649aaa9d984c90cdc64ed99ea3c9501a361b1f026d12575101e182",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/models.py",
+      "sha256": "5b21bb16212289f1de376777de2fd681c3d6c48d0466af78b3ec54712b629174",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/PHASE9-PYTHON-DEPENDENCIES.txt",
+      "sha256": "ccd368d3baa96d02e6eb6342babf2fbd8edda2dde80d5af77902f82e234f89ca",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/PHASE9-TOOLING-DEPENDENCIES.txt",
+      "sha256": "463cf3945393b85a810f590bfe2e37962111a84b6f9070992398d2148ea06c60",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/Procfile",
+      "sha256": "97acc9877af6f45ea53233917f98bcd82733376ab9618438d647b4bb15d4d7d4",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/readiness_snapshot.py",
+      "sha256": "d7f0864feb3d2d87b319d65859efba04b23d8e632d95616177a71e5ba0c5e74f",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/requirements-bootstrap.txt",
+      "sha256": "1dc2a4a2aa3ed813c7b0cbba46a1f290fa3e081c238da360635c15963f4824be",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/requirements-test.txt",
+      "sha256": "7d6d096e88a7be4635b8a190ed840219d54d21bb65018b5cf98087593e361bb3",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/requirements-tooling.txt",
+      "sha256": "4baca24f4f31aee35f5e106d5ca247e202faaa84c87add0c6e031104ba7cc2e3",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/requirements.txt",
+      "sha256": "1f3033faed1a0b0d3fa169cb1928ef828a5dafa0b6ded532363136139ff9f537",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/runtime.txt",
+      "sha256": "4cb403e5b3e213ec0f3565abdb2f27256eb0b62b54f43d5f427e5a7845575544",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/schemas.py",
+      "sha256": "42f915efeda51f1111944684146b3b69e876d21d19e6272effc6ed6240701348",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/run_local_postgres.py",
+      "sha256": "9050defd74f5403682283ee1fb42dacc8fc3cc808577a580e8ccd826f2bccd13",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/serve_workspace_test.py",
+      "sha256": "466b829727f654ce033fb273b2eda8872b2f8991e6bf2614020f11d3a72916a0",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_adoption.py",
+      "sha256": "04641d7acce3ae77e048ee4d5440b267b9d97080ec9b17bee38980b95a50c3e9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_item_migrations.py",
+      "sha256": "a9bf49e496438c0d306e514fb02dc94a171304beccef2d7b1f6f087eda4d999c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_items.py",
+      "sha256": "c683b6bc80233e39df54af6b5bdbc0c3427ff1280e777928ba0739d64000b6d9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_readonly_inspection.py",
+      "sha256": "0aa308bcbfd6ec6d42499630701948a57438c7d3df0b1976a66669346d13ac4b",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_remediation.py",
+      "sha256": "a17e0ed4a0da13fbe07d7550f5ea334d5326c76fcc78ef0b5d58771aa2d5f951",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/backend/tests/test_workspace.py",
+      "sha256": "c04a5291e83599a25267ce11f2837e65ea858a4c36309b4c3d7d3f4a35e24fdf",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/BUDGETING-IDENTITY-REPORT.md",
+      "sha256": "ebe3076f2bbe97cc8417eca6ee205606bc618176e2a0f8c2274455f5bb944fd4",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/DATABASE-VERIFICATION-RUNBOOK.md",
+      "sha256": "f17ff8ecaf9cbe98b43d0146884f175cdce75af3d1221b549f70e74de8a7f864",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/home-desktop.png",
+      "sha256": "b01f8371529d8ef80532b3c653d25b9a71f600ff531238618c85f6f5d8e1f3bb",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/home-mobile.png",
+      "sha256": "62e861a50e787d2266de3a51cf5682a2f79f230ed0efa844048dd76da21b7253",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/items-monthly-desktop.png",
+      "sha256": "2b8ef7d2f027650a1753470b93da203082067937e8cea7b86c99458c62dd956f",
+      "source_package": false,
+      "classification": "generated visual evidence; preserve, exclude from source package"
+    },
+    {
+      "path": "allowanceai/docs/items-monthly-mobile.png",
+      "sha256": "e29217dd2a92e9b51b370b18fcad8a4cc11fd8707badac72f58a3f459438984f",
+      "source_package": false,
+      "classification": "generated visual evidence; preserve, exclude from source package"
+    },
+    {
+      "path": "allowanceai/docs/pwa-install-desktop.png",
+      "sha256": "62056823903d67fc72383c29e4557bb6810c05811928983c621fcf80e5ca16fe",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/pwa-install-mobile.png",
+      "sha256": "112777bccc596f746aec512441e3f8ede941fd5e8fbdda7830b2008584c53c8a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/workspace-empty-desktop.png",
+      "sha256": "e753b43aae27b2422f35a6f5fc21213b7bf9784a17c9eac8a71e4052d130b87c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/docs/workspace-overview-desktop.png",
+      "sha256": "166ef4e6a2e068bb0bdb239e204e6875d38f247025909ddbcbc250055089d3e1",
+      "source_package": false,
+      "classification": "generated visual evidence; preserve, exclude from source package"
+    },
+    {
+      "path": "allowanceai/docs/workspace-overview-mobile.png",
+      "sha256": "a69e09f127a5bcdc7eac327e51203617d3d56247cec0ce254ba7500cdcf36f86",
+      "source_package": false,
+      "classification": "generated visual evidence; preserve, exclude from source package"
+    },
+    {
+      "path": "allowanceai/frontend/.env.example",
+      "sha256": "ae455d66030214d06a95025cc369849f71f50dea82ba211370e3f7f13ce3474a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/audit-results.json",
+      "sha256": "0d2642a44977faaf7a91340097b896c21c22cd3362fb0b3b7e0fc9a445f7cefe",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/index.html",
+      "sha256": "44fc1301da1006e78c49edc0b2db5aae6549b3ba3c55944070da52a8c09bf37c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/package-lock.json",
+      "sha256": "8438fee8e9a27f898eb0b53bcea02c63364158958d579a94085afdc6afc04c90",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/package.json",
+      "sha256": "caa8f164793816a2e6f75503c685c0128d82cbbb30d66bba70bbc44feb7af26a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/brand/SOURCE.md",
+      "sha256": "b49425bd53047c9cf920cf5dfccf57673a40593e0ed1ca029aeb4bd6af9f5ab9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/brand/whatsapp.svg",
+      "sha256": "f7b1311db718533e671645f57cd94b92f0e006e61d7e6581a80675fc5a478fc4",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/icon-192.png",
+      "sha256": "d9cef67b2e78ca909b3f1f776b9e052f34f186d8e5404303fcdce61b62889c4a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/icon-512.png",
+      "sha256": "4634d8ff0f6c3f39c089aa3908e1885418c6fbffd69797ba103a99281de0f036",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/icon.svg",
+      "sha256": "ac1e6d87253f9306ee4fd9872349b5ca1f81a8b671fe3bbbbe2ef2268546b33c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/manifest.webmanifest",
+      "sha256": "b0c6d59708cd56a41dd45cefe57103c713baae5917f776e000f2ca4a8c9a975c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/offline.html",
+      "sha256": "7bfeafe3296593e8c39e94c51faeecde2890844092fea1f784ac002bf9fd8025",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/sw.js",
+      "sha256": "119566680e404747b6c9503c5d2c0e84ad271d4b7372f53c3adcee744e42f25d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/public/version.json",
+      "sha256": "e6aab7bcf5c75b3bd447023453e19c2cf7bec17ebe71adf5decdcba22c4c57a9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/release-audit.json",
+      "sha256": "53232014437885a5ee14c0f2fea4240ac88868cf7112fa7986dd36f71f0a1520",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/api.js",
+      "sha256": "2eaa7c23362c29cb8981f5ddeddcf72feb39acbae6419b8d092a4f34ff443138",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/App.jsx",
+      "sha256": "24d5a81013d194e821b2c0b9f81e1e351f1f7f28c63db257f86b2dd75b143a73",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/AdminDashboard.jsx",
+      "sha256": "a9d5f3acf99558c1c15bb44e8de03a44f231d4efbe686c1c9a2e3df311ec5b7b",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/AlertsPanel.jsx",
+      "sha256": "4df09f2904b441b27df08646eaa1d958ed258f11d4471f7ce3e1470006585792",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/BudgetCards.jsx",
+      "sha256": "78932b4ac4bacdd4664bf3abc7eb3fba2186f12f6b4bd16cee92d2252e05b34e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/BudgetForm.jsx",
+      "sha256": "d592d9ae9cb0d5551237e1bdc0a64a50b44e908b78016a7cdecd52556a41a46c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/BudgetIntelligence.jsx",
+      "sha256": "27a5e3a5660640b807f107c5e5454862b973e2d27b81f0aa2e07592457b9102b",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/CanIBuy.jsx",
+      "sha256": "eda25c9c573afd9e0cca22b9929fd84478ffd58d496737550311cd1094a9fb2f",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/CategoryForm.jsx",
+      "sha256": "bc045f669edf70aac7c57507aacea663d7ccfd7a43a2c361346cd92542e2753c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/CategoryList.jsx",
+      "sha256": "62ab6d9af33c1d893f18fceb4c68f6f012957ed6ad3de790a3ee87670dfac331",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ContactIcons.jsx",
+      "sha256": "76f597110ee31dd5811c46e2c140a1aaa7da2313fcbd3170ed18101ca7866cfe",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/Dashboard.jsx",
+      "sha256": "f0fbd2c266717674be4124c1ff5111ab5c9eb07f684056321919b29e94292977",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ExpenseForm.jsx",
+      "sha256": "c2b6679b8b61f52c30fd58cb36b2e2ee1b8d3db342e9763fbb4838c4af8e2fb4",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ExpenseHistory.jsx",
+      "sha256": "3fd72ea903676a79a3fd0389e2ee439ae1e64582e4a5bd2879a9c9d93a92be40",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ItemAnalytics.jsx",
+      "sha256": "503450987e5b00740e61085191e5efa144a31b1b39d52afca47d166906491c40",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ItemWorkspace.jsx",
+      "sha256": "adfd6578b0bc9cf9f7704088d4e6bf95046ddc80ced4d8641d9eac98d9eb67ed",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/Login.jsx",
+      "sha256": "7f5c7e36202a5c574ad16ee69cd298f1e0a8cc2a52bc5f01ceccda46e73ca695",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/MonthlyInsights.jsx",
+      "sha256": "e174fe59f7154f0e7b20e38f3de96c89bf16382e27b73a971fe32ee9e8b9b2dd",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/MonthlyPlanner.jsx",
+      "sha256": "e110805a3631bb4b6bb9b703dcbfe2ec7757775f65bfd77d7e6267bc2518baea",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/MonthlyReport.jsx",
+      "sha256": "8b23d94fb819477a03d5c299383735d19e1ae69e1ef7cb0b09dd51699be2735e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/NotificationCenter.jsx",
+      "sha256": "affcf70d8c274fc2e40888de9f5f73802b94c050a4f78308200861366bf82b0c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/PasswordInput.jsx",
+      "sha256": "73dfad07c9e7bddd7a1202c0d4787fac3c0b0e5f33bbb8bec02796ad51158f6a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ProfileSettings.jsx",
+      "sha256": "78d39c486171f3cffcf3949d2c0c15e37b29b44c165a5d53e66ae5deb08b32a9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/PublicSite.jsx",
+      "sha256": "4f9ed34688e5078acf767e671a549baf127f737d0e642635b6f4a578837f966e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/PWAInstallPrompt.jsx",
+      "sha256": "dc627774bbcc5cd477d0e849bf89f4ce57b0538a90f8e9844d3f88033e094d1a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/Register.jsx",
+      "sha256": "f6d3714907083beddd5d393f9fa0dd8580fa0ddcb94546301f295eb0d7318768",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/SavedShoppingLists.jsx",
+      "sha256": "ca3881fb6c20682de23e1395951c12401b255e919c41368a20e7ccc93f0514d0",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/ShoppingListEvaluator.jsx",
+      "sha256": "aa17ff3e64234a6fc1c8630f956f0fcd879a48e8a1c61c88912fd68a66a9d7be",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/SpendingTimetable.jsx",
+      "sha256": "acfb566bce81c1a6ed6464bd787785e8105b7e56c41479697258ed5c03069272",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/WorkspaceIcon.jsx",
+      "sha256": "2c8df9c093f16b6677901eef3f668eef9495cba93c00087643e4a9878c198474",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/components/WorkspaceOverview.jsx",
+      "sha256": "6003cf961fca7b180b17253996bcf0a92a12aaa2e9a0bf21c60babad38ec181d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/currency.js",
+      "sha256": "44956c46b63d1cf8c791c7d22ae02b0888d780ab080ab579e111352d57d6a84f",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/items.css",
+      "sha256": "d6c6cc8bd4e5dfc357b366a6f3222d1c9176cd3225e987c504145f81be85f9f1",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/main.jsx",
+      "sha256": "f45b9719a536f61282877b4707038f032b4166187f652079447d739caca8ef0d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/styles.css",
+      "sha256": "5af9ead9b27d8f85ae44c9259841b5f886a9f59580385c2c4205ada7afac8a92",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/workspace.css",
+      "sha256": "cb5de74b6aab0b85c8cbbe046a359fbe1705bab189eb50e6db960752cf0d201e",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/src/workspaceData.js",
+      "sha256": "4fa4085ea2a797cfed3a29277930145b9fa09b258859681e2fb2f5092700ad29",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/browser-smoke.cjs",
+      "sha256": "9eee583be40bd7c3c941ce8d4dc1606292059b0901528a98272b73e904367649",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/currency.test.cjs",
+      "sha256": "8d32967f22b6b3a02456b3a454e540283793d0e9c8ce952abfeda619d67198bb",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/items-e2e.cjs",
+      "sha256": "921b2232a5415ec4d3c9378e0fe1279ae13bed0d51f8d6f45af588b84b9ae160",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/pwa-install-smoke.cjs",
+      "sha256": "d491902c5e282fbf219b53fc672579840a8a409d03891dc3282a5762abfc658d",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/pwa-smoke.cjs",
+      "sha256": "204d7d2cdfb7c518eac1e4708d85a3145a9b9e920e1b4c987b201024844b2614",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/remediation-e2e.cjs",
+      "sha256": "16781853979a4fe745539ad4e309874a685dde0e980a83a1dbbfcdfd76b2ce2a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/tests/workspace-e2e.cjs",
+      "sha256": "473df2571f37dac40a2c55681195711dbab96fbbf9c4923cb8386a97c6e81f4a",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/vercel.json",
+      "sha256": "10857488c20d0c31a0653239624ffd28a211556c890d0912f3ccfca1c2f55d02",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/frontend/vite.config.js",
+      "sha256": "0a936e7700bead14fb5eb28dce798c90e5b629e14d32ed671599474c9e3b8cb4",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/IMPLEMENTATION-INVENTORY.md",
+      "sha256": "460982e587b1a0823bb81d99e087c7b683d9d3fb029f15cfc3cd624f8c884cd7",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/IMPLEMENTATION-REPORT.md",
+      "sha256": "d2066b529a9d772257fb4b02bacf4a79a9dab642e62f0c538622331d0bbd6c69",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/INTELLIGENT-BUDGETING-PLAN.md",
+      "sha256": "ac91bad78d2cafc4daccf1acdafd682df108a772b361dd671f334364bf4aa1e9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/INTELLIGENT-BUDGETING-REPORT.md",
+      "sha256": "3af084e2e3148802516060f1061083e03aec819c85ff4dee5cbca8b3fdc4c138",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/ITEM-LEDGER-DEPLOYMENT.md",
+      "sha256": "7ed190edc5d82afd5c1473778d9c0e7b30ebff50db14e900df956ca47b5507b6",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/PHASE9-BACKEND-AUDIT.json",
+      "sha256": "cdc89ebd2680041d56baa6f6675ba60951e6e4252ba1bf923270adf9b0e86d50",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/PHASE9-TOOLING-AUDIT.json",
+      "sha256": "f36147cfaced7b06540b66fc7f5ec0a5c32884d2429353b18ab1542d0687b269",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/PRODUCTION-READINESS-AUDIT.md",
+      "sha256": "df6de8a420333cdb69ef09e0020be11aae98e21bcac1e0d3a03e05052240221c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/PRODUCTION-RELEASE-REPORT.md",
+      "sha256": "b1169d51a7bef4a424f8287a91449662d33149935407fe966d8e0186f69efbb1",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/PWA-INSTALL-REPORT.md",
+      "sha256": "d865648577e5e74598fa504c96045a639426ad68d482dd965fe5722b3b395a83",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/READINESS-REMEDIATION.md",
+      "sha256": "500167d0c3e3e5d15acc948503e527b5389f66c869c3f34e15b8649e85bbbf15",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/README.md",
+      "sha256": "ee1e6347464c08200616573c1da1520f16eecd112d0c252002c7f111b424cbb6",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/RELEASE-CANDIDATE-BACKEND-AUDIT.json",
+      "sha256": "4e7a942f8614e697073dcce82ffbedeabbc8768959c967060b4deb3405ac9e8c",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/RELEASE-CANDIDATE-PYTHON-DEPENDENCIES.txt",
+      "sha256": "ec75bd889f98ba8b8cb187703ca1f229b7ce63e167ce30bcc6240ef8b7201d97",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/RELEASE-CANDIDATE-SOURCE-MANIFEST.json",
+      "sha256": "ef6aa5a169ef2d3b20973fa155aa28ee31fa81f95d4417944e5365798e7b5e54",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/RELEASE-CANDIDATE-VERIFICATION.md",
+      "sha256": "f0d2a51137c5fef98a01f7db4d31521d29408132de07fd4a5b3b9eb670881197",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/WORKSPACE-AUDIT.md",
+      "sha256": "0ea8c9029847cf635c9e2ceeb16781b4e8a375f81b12423aabc6e6ecf01c5059",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    },
+    {
+      "path": "allowanceai/WORKSPACE-IMPLEMENTATION-REPORT.md",
+      "sha256": "cda960e1e59c94a5f8389dc4ffb47e4bb244f027b0460b48672d31f835b58ae9",
+      "source_package": true,
+      "classification": "source, static asset or intentional release evidence"
+    }
+  ],
+  "excluded_patterns": [
+    ".env except .env.example",
+    "*.db/sqlite/dump/backup/pyc/log/pem",
+    "venv/.venv/__pycache__",
+    "node_modules/dist/build",
+    ".git"
+  ],
+  "generated_visual_evidence": [
+    "allowanceai/docs/workspace-overview-desktop.png",
+    "allowanceai/docs/workspace-overview-mobile.png",
+    "allowanceai/docs/items-monthly-desktop.png",
+    "allowanceai/docs/items-monthly-mobile.png"
+  ]
+}

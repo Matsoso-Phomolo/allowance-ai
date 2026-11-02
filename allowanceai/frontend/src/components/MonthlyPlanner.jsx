@@ -42,16 +42,16 @@ export default function MonthlyPlanner({ budget, onCreatePlan }) {
 
     try {
       const result = await onCreatePlan({
-        allowance: Number(form.allowance),
+        allowance: form.allowance,
 
         month: form.month,
 
         fixed_commitments: {
-          "Data Bundles": Number(form.dataBundles),
+          "Data Bundles": form.dataBundles,
 
-          Mokhatlo: Number(form.mokhatlo),
+          Mokhatlo: form.mokhatlo,
 
-          Savings: Number(form.savings),
+          Savings: form.savings,
         },
 
         user_preferences: {
@@ -221,7 +221,7 @@ export default function MonthlyPlanner({ budget, onCreatePlan }) {
           automatically.
         </p>
 
-        <button type="submit" disabled={saving || Number(form.allowance) <= 0}>
+        <button type="submit" disabled={saving || form.allowance <= 0}>
           {saving ? "Generating…" : "Generate Plan"}
         </button>
 

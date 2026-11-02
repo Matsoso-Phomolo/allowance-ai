@@ -67,8 +67,8 @@ export default function BudgetForm({ budget, onSaveBudget }) {
     try {
       await onSaveBudget({
         month: form.month,
-        allowance: Number(form.allowance),
-        savings_target: Number(form.savings_target),
+        allowance: form.allowance,
+        savings_target: form.savings_target,
       });
       setMessage(`Budget saved for ${form.month}.`);
     } catch (err) {

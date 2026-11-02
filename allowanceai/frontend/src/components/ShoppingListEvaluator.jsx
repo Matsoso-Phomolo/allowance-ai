@@ -3,13 +3,12 @@ import { useState } from "react";
 
 import SavedShoppingLists from "./SavedShoppingLists";
 
-
 const blankItem = { item_name: "", amount: "", category_name: "" };
 
 function normalizedItems(items) {
   return items.map((item) => ({
     item_name: item.item_name.trim(),
-    amount: Number(item.amount),
+    amount: item.amount,
     category_name: item.category_name,
   }));
 }
@@ -45,7 +44,11 @@ export default function ShoppingListEvaluator({
   const [error, setError] = useState("");
 
   function updateItem(index, field, value) {
-    setItems((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item)));
+    setItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
+    );
     setMessage("");
   }
 
@@ -55,7 +58,9 @@ export default function ShoppingListEvaluator({
   }
 
   function removeRow(index) {
-    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    setItems((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    );
     setMessage("");
   }
 
@@ -86,7 +91,8 @@ export default function ShoppingListEvaluator({
     setMessage("");
     try {
       const saved = await onSaveShoppingList({
-        name: listName.trim() || `Shopping list ${new Date().toLocaleDateString()}`,
+        name:
+          listName.trim() || `Shopping list ${new Date().toLocaleDateString()}`,
         items: normalizedItems(items),
       });
       setCurrentSavedList(saved);
@@ -140,13 +146,17 @@ export default function ShoppingListEvaluator({
     setCurrentSavedList(list);
     setIsEditingSaved(edit);
     setListName(list.name);
-    setItems(list.items.map((item) => ({
-      item_name: item.item_name,
-      amount: String(item.amount),
-      category_name: item.category_name,
-    })));
+    setItems(
+      list.items.map((item) => ({
+        item_name: item.item_name,
+        amount: String(item.amount),
+        category_name: item.category_name,
+      })),
+    );
     setResult(resultFromSaved(list));
-    setMessage(edit ? "Editing saved shopping list." : "Saved shopping list loaded.");
+    setMessage(
+      edit ? "Editing saved shopping list." : "Saved shopping list loaded.",
+    );
     setError("");
   }
 
@@ -180,7 +190,9 @@ export default function ShoppingListEvaluator({
               required
               placeholder="Item"
               value={item.item_name}
-              onChange={(event) => updateItem(index, "item_name", event.target.value)}
+              onChange={(event) =>
+                updateItem(index, "item_name", event.target.value)
+              }
             />
             <input
               min="1"
@@ -188,12 +200,16 @@ export default function ShoppingListEvaluator({
               placeholder="Amount"
               type="number"
               value={item.amount}
-              onChange={(event) => updateItem(index, "amount", event.target.value)}
+              onChange={(event) =>
+                updateItem(index, "amount", event.target.value)
+              }
             />
             <select
               required
               value={item.category_name}
-              onChange={(event) => updateItem(index, "category_name", event.target.value)}
+              onChange={(event) =>
+                updateItem(index, "category_name", event.target.value)
+              }
             >
               <option value="">Category</option>
               {categories.map((category) => (
@@ -203,7 +219,11 @@ export default function ShoppingListEvaluator({
               ))}
             </select>
             {items.length > 1 && (
-              <button className="danger-button compact-button" type="button" onClick={() => removeRow(index)}>
+              <button
+                className="danger-button compact-button"
+                type="button"
+                onClick={() => removeRow(index)}
+              >
                 Remove
               </button>
             )}
@@ -216,24 +236,44 @@ export default function ShoppingListEvaluator({
           </button>
           <button type="submit">Evaluate List</button>
           {canSave && (
-            <button className="secondary-button" type="button" onClick={handleSave}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={handleSave}
+            >
               Save List
             </button>
           )}
           {canUpdate && (
-            <button className="secondary-button" type="button" onClick={handleUpdateSaved}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={handleUpdateSaved}
+            >
               Update Saved List
             </button>
           )}
           {currentSavedList && !isEditingSaved && (
             <>
-              <button className="secondary-button" type="button" onClick={() => setIsEditingSaved(true)}>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setIsEditingSaved(true)}
+              >
                 Edit
               </button>
-              <button className="danger-button" type="button" onClick={() => handleDeleteSaved()}>
+              <button
+                className="danger-button"
+                type="button"
+                onClick={() => handleDeleteSaved()}
+              >
                 Delete
               </button>
-              <button className="secondary-button" type="button" onClick={resetDraft}>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={resetDraft}
+              >
                 New List
               </button>
             </>
@@ -245,16 +285,26 @@ export default function ShoppingListEvaluator({
       {error && <div className="notice danger">{error}</div>}
 
       {result && (
-        <div className={`decision shopping-result ${result.status ? result.status.toLowerCase() : result.approved ? "safe" : "danger"}`}>
+        <div
+          className={`decision shopping-result ${result.status ? result.status.toLowerCase() : result.approved ? "safe" : "danger"}`}
+        >
           <div className="shopping-result-heading">
             <strong>{result.approved ? "Approved" : "Not Affordable"}</strong>
             {currentSavedList && <span className="pill safe">Saved</span>}
           </div>
           <div className="shopping-result-grid">
             <span>Total cost: {money(result.total_cost)}</span>
-            {result.money_after_purchase != null && <span>Money after purchase: {money(result.money_after_purchase)}</span>}
-            <span>Risk: {result.risk_score ?? result.metrics?.risk_score ?? 0}/100</span>
-            {result.confidence != null && <span>Confidence: {Math.round(result.confidence * 100)}%</span>}
+            {result.money_after_purchase != null && (
+              <span>
+                Money after purchase: {money(result.money_after_purchase)}
+              </span>
+            )}
+            <span>
+              Risk: {result.risk_score ?? result.metrics?.risk_score ?? 0}/100
+            </span>
+            {result.confidence != null && (
+              <span>Confidence: {Math.round(result.confidence * 100)}%</span>
+            )}
           </div>
           {result.reasoning && <span>{result.reasoning}</span>}
           <p>{result.advice}</p>

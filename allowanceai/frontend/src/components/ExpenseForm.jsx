@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function ExpenseForm({ categories, onAddExpense }) {
+export default function ExpenseForm({ userId, categories, onAddExpense }) {
   const [form, setForm] = useState({
     item_name: "",
 
@@ -11,6 +11,26 @@ export default function ExpenseForm({ categories, onAddExpense }) {
     expense_date: new Date().toISOString().slice(0, 10),
   });
 
+  const operationKey = useRef(null);
+  const recoveryKey = `allowanceai:manual-expense:${userId}`;
+  const pendingPayload = useRef(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(recoveryKey) || "null");
+      if (saved) {
+        pendingPayload.current = saved;
+        operationKey.current = saved.operation_key;
+        setForm(saved);
+        setError(
+          "A prior expense request may have completed. Submit the saved details again to reconcile without duplicates.",
+        );
+      }
+    } catch {
+      setError(
+        "Check expense history before retrying: recovery storage is unavailable.",
+      );
+    }
+  }, [recoveryKey]);
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState("");
@@ -31,12 +51,19 @@ export default function ExpenseForm({ categories, onAddExpense }) {
     setMessage("");
 
     try {
-      const result = await onAddExpense({
+      operationKey.current ||= crypto.randomUUID();
+      const payload = pendingPayload.current || {
         ...form,
+        amount: form.amount,
+        operation_key: operationKey.current,
+      };
+      sessionStorage.setItem(recoveryKey, JSON.stringify(payload));
+      pendingPayload.current = payload;
+      const result = await onAddExpense(payload);
+      sessionStorage.removeItem(recoveryKey);
+      pendingPayload.current = null;
 
-        amount: Number(form.amount),
-      });
-
+      operationKey.current = null;
       setForm((current) => ({
         ...current,
 
@@ -51,6 +78,11 @@ export default function ExpenseForm({ categories, onAddExpense }) {
 
       setMessage(result?.feedback?.message || "Expense added.");
     } catch (err) {
+      if ([400, 404, 409, 422].includes(err.status)) {
+        sessionStorage.removeItem(recoveryKey);
+        pendingPayload.current = null;
+        operationKey.current = null;
+      }
       setError(err.message);
     } finally {
       setSaving(false);
@@ -64,78 +96,82 @@ export default function ExpenseForm({ categories, onAddExpense }) {
       </div>
 
       <form className="form" onSubmit={handleSubmit}>
-        <label>
-          Item
-          <input
-            required
-
-            value={form.item_name}
-
-            onChange={(event) =>
-              setForm({ ...form, item_name: event.target.value })
-            }
-
-            placeholder="Lunch, data bundle, face cream"
-          />
-        </label>
-
-        <div className="form-row">
+        <fieldset
+          className="expense-fields"
+          disabled={saving || Boolean(pendingPayload.current)}
+        >
           <label>
-            Amount
-            <input
-              min="0.01"
-
-              required
-
-              step="0.01"
-
-              type="number"
-
-              value={form.amount}
-
-              onChange={(event) =>
-                setForm({ ...form, amount: event.target.value })
-              }
-
-              placeholder="0.00"
-            />
-          </label>
-
-          <label>
-            Date
+            Item
             <input
               required
 
-              type="date"
-
-              value={form.expense_date}
+              value={form.item_name}
 
               onChange={(event) =>
-                setForm({ ...form, expense_date: event.target.value })
+                setForm({ ...form, item_name: event.target.value })
               }
+
+              placeholder="Lunch, data bundle, face cream"
             />
           </label>
-        </div>
 
-        <label>
-          Category
-          <select
-            required
+          <div className="form-row">
+            <label>
+              Amount
+              <input
+                min="0.01"
 
-            value={form.category_name || categories[0]?.name || ""}
+                required
 
-            onChange={(event) =>
-              setForm({ ...form, category_name: event.target.value })
-            }
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
+                step="0.01"
 
+                type="number"
+
+                value={form.amount}
+
+                onChange={(event) =>
+                  setForm({ ...form, amount: event.target.value })
+                }
+
+                placeholder="0.00"
+              />
+            </label>
+
+            <label>
+              Date
+              <input
+                required
+
+                type="date"
+
+                value={form.expense_date}
+
+                onChange={(event) =>
+                  setForm({ ...form, expense_date: event.target.value })
+                }
+              />
+            </label>
+          </div>
+
+          <label>
+            Category
+            <select
+              required
+
+              value={form.category_name || categories[0]?.name || ""}
+
+              onChange={(event) =>
+                setForm({ ...form, category_name: event.target.value })
+              }
+            >
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </fieldset>
         <button type="submit" disabled={saving}>
           {saving ? "Saving…" : "Add Spending"}
         </button>

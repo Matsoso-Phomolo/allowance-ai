@@ -1,5 +1,8 @@
 import os
 import time
+from decimal import Decimal
+from fastapi.encoders import ENCODERS_BY_TYPE
+ENCODERS_BY_TYPE[Decimal] = lambda value: format(value, "f")
 
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +17,8 @@ from database import Base, SessionLocal, engine, get_db
 
 
 app = FastAPI(title="AllowanceAI API", version="1.0.0")
+from item_routes import router as item_router
+app.include_router(item_router)
 START_TIME = time.time()
 
 DEFAULT_FRONTEND_ORIGINS = [
@@ -92,7 +97,7 @@ def ensure_sqlite_user_schema():
                 connection.exec_driver_sql(f"DROP TABLE {table_name}")
 
 
-def ensure_user_role_schema():
+def ensure_user_role_schema(alter_schema: bool = True):
     backend = engine.url.get_backend_name()
     admin_emails = {
         email.strip().lower()
@@ -101,14 +106,14 @@ def ensure_user_role_schema():
     }
 
     with engine.begin() as connection:
-        if backend == "sqlite":
+        if alter_schema and backend == "sqlite":
             table_names = {row[0] for row in connection.exec_driver_sql("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
             if "users" not in table_names:
                 return
             columns = {row[1] for row in connection.exec_driver_sql("PRAGMA table_info(users)").fetchall()}
             if "role" not in columns:
                 connection.exec_driver_sql("ALTER TABLE users ADD COLUMN role VARCHAR NOT NULL DEFAULT 'user'")
-        elif "postgresql" in backend:
+        elif alter_schema and "postgresql" in backend:
             connection.exec_driver_sql("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'user'")
 
         connection.exec_driver_sql("UPDATE users SET role = 'user' WHERE role IS NULL OR role = ''")
@@ -118,16 +123,22 @@ def ensure_user_role_schema():
 
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
-    ensure_sqlite_user_schema()
-    ensure_user_role_schema()
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        for user in db.query(models.User).all():
-            crud.rebuild_behavior_tracking(db, user)
-    finally:
-        db.close()
+    auto_create = engine.url.get_backend_name() == "sqlite" or os.getenv("ALLOWANCEAI_TEST_CREATE_SCHEMA") == "1"
+    if auto_create:
+        Base.metadata.create_all(bind=engine)
+        ensure_sqlite_user_schema()
+        ensure_user_role_schema()
+        Base.metadata.create_all(bind=engine)
+    else:
+        # Production DDL is an explicit, reviewed Alembic operation, never startup.
+        with engine.connect() as connection:
+            revisions = list(connection.execute(text("SELECT version_num FROM alembic_version")).scalars())
+            revision = revisions[0] if len(revisions) == 1 else None
+            if revision != "0003_month_allocations":
+                raise RuntimeError("Database migrations must be applied before starting this release.")
+        # Preserve the existing configured admin allowlist without startup DDL.
+        ensure_user_role_schema(alter_schema=False)
+    # Derived logs are rebuilt transactionally on writes, never at worker startup.
 
 
 @app.get("/")
@@ -289,8 +300,8 @@ def create_category(
 
 
 @app.get("/api/categories", response_model=list[schemas.CategoryResponse])
-def get_categories(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user)):
-    return crud.get_categories(db, current_user)
+def get_categories(db: Session = Depends(get_db), current_user: models.User = Depends(auth.get_current_user), month: str | None = Query(None, pattern=r"^[1-9][0-9]{3}-(0[1-9]|1[0-2])$")):
+    return crud.get_categories(db, current_user, month)
 
 
 @app.put("/api/categories/{category_id}")

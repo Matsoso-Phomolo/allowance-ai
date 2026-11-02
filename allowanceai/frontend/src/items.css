@@ -1,0 +1,228 @@
+.item-workspace {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.item-workspace h2,
+.item-workspace h3 {
+  margin: 0.2rem 0 0.6rem;
+}
+.item-workspace p {
+  color: var(--workspace-muted, #456653);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.item-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+.item-heading button {
+  flex-shrink: 0;
+}
+.item-workspace input,
+.item-workspace select {
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+.item-workspace label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+  min-width: 0;
+}
+.item-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+.item-draft-total {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  background: #eaf5e8;
+}
+.item-draft-total small {
+  font-weight: 400;
+}
+.item-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.7rem;
+}
+.item-summary > div {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #d4e5d0;
+  border-radius: 0.8rem;
+  background: white;
+  min-width: 0;
+}
+.item-summary strong {
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+.item-summary span {
+  font-size: 0.85rem;
+  color: #456653;
+}
+.item-list {
+  display: grid;
+  gap: 1rem;
+}
+.item-row {
+  border: 1px solid #d4e5d0;
+  border-radius: 0.8rem;
+  padding: 1rem;
+  min-width: 0;
+}
+.item-row-heading {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.item-row .item-select {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.item-row input[type="checkbox"] {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+  accent-color: #277a43;
+}
+.item-row strong {
+  overflow-wrap: anywhere;
+}
+.item-status {
+  border: 1px solid #b8d8ac;
+  border-radius: 2rem;
+  background: #eaf5e8;
+  color: #173d2c;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+.item-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0.7rem 0;
+}
+.item-amounts dt {
+  color: #456653;
+  font-size: 0.8rem;
+}
+.item-amounts dd {
+  margin: 0.35rem 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+.item-actions button {
+  min-height: 44px;
+}
+.item-row .item-actions button {
+  background: #eaf5e8;
+  border: 1px solid #b8d8ac;
+  color: #173d2c;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}
+.item-workspace fieldset {
+  min-width: 0;
+  border: 1px solid #c8dfc0;
+  border-radius: 0.6rem;
+  padding: 1rem;
+}
+.item-workspace summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.6rem 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.item-workspace details ul,
+.item-confirmation ul {
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+.item-workspace li {
+  padding: 0.4rem 0;
+  line-height: 1.5;
+}
+.item-comparison {
+  display: grid;
+  gap: 0.75rem;
+}
+.item-comparison > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #e0ecdc;
+  padding: 0.75rem 0;
+}
+.item-comparison strong {
+  margin-right: auto;
+}
+.item-comparison meter {
+  accent-color: #277a43;
+  width: 100%;
+  height: 1rem;
+}
+.item-confirmation {
+  border: 2px solid #277a43;
+}
+.item-workspace :focus-visible {
+  outline: 3px solid #277a43;
+  outline-offset: 3px;
+}
+.item-workspace button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+@media (max-width: 767px) {
+  .item-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .item-amounts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .item-heading {
+    flex-wrap: wrap;
+  }
+  .item-workspace .panel {
+    padding: 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .item-workspace * {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}
+
+.workspace-main .item-workspace .form {
+  max-width: none;
+}
+
+.expense-fields {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}

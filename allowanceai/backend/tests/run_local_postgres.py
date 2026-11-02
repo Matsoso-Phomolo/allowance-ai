@@ -14,6 +14,6 @@ if __name__ == "__main__":
     if parsed.get_backend_name() != "postgresql" or parsed.host not in {"localhost", "127.0.0.1"}:
         raise SystemExit("Refusing non-loopback PostgreSQL credentials. No connection was made.")
     os.environ["WORKSPACE_TEST_POSTGRES_URL"] = value
-    suite = unittest.defaultTestLoader.discover(str(backend / "tests"), pattern="test_workspace.py")
+    suite = unittest.defaultTestLoader.discover(str(backend / "tests"), pattern="test_*.py")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     raise SystemExit(0 if result.wasSuccessful() else 1)

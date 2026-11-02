@@ -34,13 +34,10 @@ export default function WorkspaceOverview({
   const allowance = Number(budget?.allowance ?? 0);
   const spent = Number(budget?.total_spent ?? 0);
   const utilization = allowance > 0 ? (spent / allowance) * 100 : null;
-  const byCategory = Object.entries(
-    currentExpenses.reduce((totals, expense) => {
-      totals[expense.category_name] =
-        (totals[expense.category_name] || 0) + Number(expense.amount);
-      return totals;
-    }, {}),
-  ).sort((a, b) => b[1] - a[1]);
+  const byCategory = categories
+    .filter((category) => Number(category.spent_amount) > 0)
+    .map((category) => [category.name, category.spent_amount])
+    .sort((a, b) => Number(b[1]) - Number(a[1]));
   const recommendations =
     configured && currentExpenses.length
       ? (monthlyInsights?.recommendations || []).slice(0, 3)
@@ -104,7 +101,7 @@ export default function WorkspaceOverview({
                   : "You saved a zero budget. No allowance has been allocated."
                 : utilization > 100
                   ? "Spending exceeds your allowance. Review your expenses and plan."
-                  : `${money(spent)} spent of ${money(allowance)} allocated.`}
+                  : `${money(budget.total_spent)} spent of ${money(budget.allowance)} allocated.`}
           </p>
           <div className="workspace-utilization-footer">
             <span>Planned expenditure</span>

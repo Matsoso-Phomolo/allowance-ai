@@ -1,17 +1,19 @@
-from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from database import Base
 
 
+# Financial persistence uses Decimal; API money is serialized as exact decimal strings.
+# The shared item ledger uses Decimal end-to-end (item_models/item_service).
 class Budget(Base):
     __tablename__ = "budgets"
 
     id = Column(Integer, primary_key=True, index=True)
     month = Column(String, nullable=False, index=True)
-    allowance = Column(Float, nullable=False)
-    savings_target = Column(Float, nullable=False, default=0)
+    allowance = Column(Numeric(), nullable=False)
+    savings_target = Column(Numeric(), nullable=False, default=0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
 
 
@@ -20,7 +22,7 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, index=True)
-    planned_amount = Column(Float, nullable=False)
+    planned_amount = Column(Numeric(), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
 
     expenses = relationship("Expense", back_populates="category")
@@ -31,7 +33,7 @@ class Expense(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     item_name = Column(String, nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(), nullable=False)
     expense_date = Column(Date, nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
@@ -45,7 +47,7 @@ class ShoppingList(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    total_cost = Column(Float, nullable=False, default=0)
+    total_cost = Column(Numeric(), nullable=False, default=0)
     approved = Column(Boolean, nullable=False, default=False)
     advice = Column(String, nullable=False, default="")
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
@@ -60,7 +62,7 @@ class ShoppingListItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     shopping_list_id = Column(Integer, ForeignKey("shopping_lists.id"), nullable=False, index=True)
     item_name = Column(String, nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(), nullable=False)
     category_name = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -72,7 +74,7 @@ class DailySpendingLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     spending_date = Column(Date, nullable=False, index=True)
-    total_amount = Column(Float, nullable=False, default=0)
+    total_amount = Column(Numeric(), nullable=False, default=0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
 
 
@@ -82,7 +84,7 @@ class CategoryDailyTotal(Base):
     id = Column(Integer, primary_key=True, index=True)
     spending_date = Column(Date, nullable=False, index=True)
     category_name = Column(String, nullable=False, index=True)
-    total_amount = Column(Float, nullable=False, default=0)
+    total_amount = Column(Numeric(), nullable=False, default=0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
 
 
@@ -107,3 +109,8 @@ class Notification(Base):
     type = Column(String, nullable=False, default="info")
     is_read = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+# Register the shared item ledger on the same metadata.
+import item_models  # noqa: E402,F401
+
+from allocation_models import CategoryAllocation, ExpenseOperation

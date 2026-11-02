@@ -1,3 +1,5 @@
+from decimal import Decimal
+from finance import rounded as round
 import calendar
 from datetime import date
 
@@ -102,7 +104,7 @@ def expense_entry_feedback(category: dict) -> dict:
             ),
             **decision(
                 "DANGER",
-                0.9,
+                Decimal('0.9'),
                 f"{category_name} is now above its planned budget.",
                 [f"Reduce this expense by at least R{abs(remaining):.2f}, or move money from a flexible category."],
                 {"risk_score": 90, "category": category_name, "remaining_amount": remaining},
@@ -115,7 +117,7 @@ def expense_entry_feedback(category: dict) -> dict:
             "message": f"Congratulations, {category_name} is fully paid for this month.",
             **decision(
                 "SAFE",
-                0.9,
+                Decimal('0.9'),
                 f"{category_name} is a fixed monthly obligation and has reached its planned amount.",
                 ["Keep this payment recorded and avoid spending extra in this category unless the bill changes."],
                 {"risk_score": 5, "category": category_name, "remaining_amount": remaining},
@@ -128,7 +130,7 @@ def expense_entry_feedback(category: dict) -> dict:
             "message": f"{category_name} has reached its planned budget. Further spending here will go over budget.",
             **decision(
                 "WARNING",
-                0.86,
+                Decimal('0.86'),
                 f"{category_name} has no planned money left.",
                 ["Use the Edit button in Recent Expenses if this amount needs to be adjusted."],
                 {"risk_score": 70, "category": category_name, "remaining_amount": remaining},
@@ -141,7 +143,7 @@ def expense_entry_feedback(category: dict) -> dict:
             "message": f"{category_name} has used {percentage:.0f}% of its planned budget.",
             **decision(
                 "WARNING",
-                0.78,
+                Decimal('0.78'),
                 f"{category_name} is close to its planned limit.",
                 ["Spend carefully in this category for the rest of the month."],
                 {"risk_score": round(percentage), "category": category_name, "remaining_amount": remaining},
@@ -153,7 +155,7 @@ def expense_entry_feedback(category: dict) -> dict:
         "message": f"Expense saved. {category_name} is still within budget.",
         **decision(
             "SAFE",
-            0.75,
+            Decimal('0.75'),
             f"{category_name} still has planned money remaining.",
             [],
             {"risk_score": round(percentage), "category": category_name, "remaining_amount": remaining},
@@ -172,35 +174,35 @@ def trend_from_values(values: list[float]) -> str:
     if len(values) < 3:
         return "stable"
     midpoint = len(values) // 2
-    first_avg = sum(values[:midpoint]) / max(midpoint, 1)
+    first_avg = sum(values[:midpoint], Decimal(0)) / max(midpoint, 1)
     second_values = values[midpoint:]
-    second_avg = sum(second_values) / max(len(second_values), 1)
-    if second_avg > first_avg * 1.15:
+    second_avg = sum(second_values, Decimal(0)) / max(len(second_values), 1)
+    if second_avg > first_avg * Decimal('1.15'):
         return "increasing"
-    if second_avg < first_avg * 0.85:
+    if second_avg < first_avg * Decimal('0.85'):
         return "decreasing"
     return "stable"
 
 
 def consistency_score(values: list[float]) -> float:
     if len(values) < 2:
-        return 0.45
-    avg = sum(values) / len(values)
+        return Decimal('0.45')
+    avg = sum(values, Decimal(0)) / len(values)
     if avg <= 0:
-        return 0.7
+        return Decimal('0.7')
     variance = sum((value - avg) ** 2 for value in values) / len(values)
-    coefficient = (variance ** 0.5) / avg
-    return max(0.25, min(1 - coefficient, 0.95))
+    coefficient = (variance ** Decimal('0.5')) / avg
+    return max(Decimal('0.25'), min(1 - coefficient, Decimal('0.95')))
 
 
 def behavior_summary(behavior: dict | None) -> dict:
     behavior = behavior or {}
     daily_logs = behavior.get("daily_spending_log", [])
     category_logs = behavior.get("category_daily_totals", [])
-    daily_values = [row["total_amount"] for row in daily_logs]
+    daily_values = [Decimal(str(row["total_amount"])) for row in daily_logs]
     category_values: dict[str, list[float]] = {}
     for row in category_logs:
-        category_values.setdefault(row["category_name"], []).append(row["total_amount"])
+        category_values.setdefault(row["category_name"], []).append(Decimal(str(row["total_amount"])))
 
     category_spend_trends = {
         category: trend_from_values(values) for category, values in category_values.items()
@@ -208,14 +210,14 @@ def behavior_summary(behavior: dict | None) -> dict:
     repeat_patterns = {
         category: {
             "active_days": len([value for value in values if value > 0]),
-            "avg_spend_when_active": round(sum(values) / max(len([value for value in values if value > 0]), 1), 2),
+            "avg_spend_when_active": round(sum(values, Decimal(0)) / max(len([value for value in values if value > 0]), 1), 2),
             "trend": trend_from_values(values),
         }
         for category, values in category_values.items()
         if is_speed_sensitive_category(category)
     }
     return {
-        "avg_daily_spend": round(sum(daily_values) / max(len(daily_values), 1), 2),
+        "avg_daily_spend": round(sum(daily_values, Decimal(0)) / max(len(daily_values), 1), 2),
         "trend": trend_from_values(daily_values),
         "consistency": round(consistency_score(daily_values), 2),
         "data_points": len(daily_values),
@@ -226,9 +228,9 @@ def behavior_summary(behavior: dict | None) -> dict:
 
 def confidence_from_behavior(behavior_metrics: dict) -> float:
     data_points = behavior_metrics.get("data_points", 0)
-    consistency = behavior_metrics.get("consistency", 0.45)
-    data_factor = min(data_points / 10, 1)
-    return round(max(0.35, min((data_factor * 0.45) + (consistency * 0.45) + 0.1, 0.95)), 2)
+    consistency = behavior_metrics.get("consistency", Decimal('0.45'))
+    data_factor = min(Decimal(data_points) / 10, 1)
+    return round(max(Decimal('0.35'), min((data_factor * Decimal('0.45')) + (consistency * Decimal('0.45')) + Decimal('0.1'), Decimal('0.95'))), 2)
 
 
 def category_risk(category: dict, category_velocity: float = 0) -> int:
@@ -270,7 +272,7 @@ def build_budget_intelligence(summary: dict, categories: list[dict], today: date
     behavior_metrics = behavior_summary(behavior)
     remaining_money = summary["remaining_money"]
     total_spent = summary["total_spent"]
-    speed_sensitive_spent = sum(c["spent_amount"] for c in categories if is_speed_sensitive_category(c["name"]))
+    speed_sensitive_spent = sum((Decimal(str(c["spent_amount"])) for c in categories if is_speed_sensitive_category(c["name"])), Decimal(0))
     monthly_purchase_spent = total_spent - speed_sensitive_spent
     safe_daily_spend = remaining_money / ctx["planning_days"] if remaining_money > 0 else 0
     spending_velocity = speed_sensitive_spent / ctx["elapsed_days"] if ctx["elapsed_days"] else 0
@@ -297,7 +299,7 @@ def build_budget_intelligence(summary: dict, categories: list[dict], today: date
         or [0]
     )
     protected_pressure_risk = 12 if protected_pressure and protected_pressure < 35 else 0
-    imbalance_risk = max([category_risk(category) for category in categories] or [0]) * 0.25
+    imbalance_risk = max([category_risk(category) for category in categories] or [0]) * Decimal('0.25')
     risk_score = round(max(balance_risk, min(balance_risk + velocity_risk + trend_risk + protected_pressure_risk + imbalance_risk, 100)))
     status = status_from_risk(risk_score)
 
@@ -468,7 +470,7 @@ def build_alerts(summary: dict, categories: list[dict], today: date | None = Non
                     "message": f"{category['name']} has used {category['percentage_used']:.0f}% of its budget.",
                     **decision(
                         status,
-                        0.78,
+                        Decimal('0.78'),
                         f"{category['name']} is nearing its planned limit.",
                         ["Avoid increasing protected or essential category pressure."],
                         {"risk_score": cat_risk, "category_velocity": 0},
@@ -484,7 +486,7 @@ def build_alerts(summary: dict, categories: list[dict], today: date | None = Non
                 "message": "Warning: snacks are being spent too fast before the middle of the month.",
                 **decision(
                     "WARNING",
-                    0.84,
+                    Decimal('0.84'),
                     "Snacks are repeat-use spending and more than half the category is used before mid-month.",
                     ["Reduce Snacks first before touching Food, Savings, Emergency, or Mokhatlo."],
                     {"risk_score": 65, "spending_velocity": intelligence["spending_velocity"]},
@@ -497,7 +499,7 @@ def build_alerts(summary: dict, categories: list[dict], today: date | None = Non
             {
                 "type": "safe",
                 "message": "You are on track. Keep spending carefully.",
-                **decision("SAFE", 0.8, "No category is over its warning threshold.", [], {"risk_score": intelligence["risk_score"]}),
+                **decision("SAFE", Decimal('0.8'), "No category is over its warning threshold.", [], {"risk_score": intelligence["risk_score"]}),
             }
         )
     return alerts
@@ -576,10 +578,10 @@ def can_i_buy_decision(
 def preference_multiplier(level: str, low: float, medium: float, high: float) -> float:
     normalized = (level or "medium").strip().lower()
     if normalized == "low":
-        return low
+        return Decimal(str(low))
     if normalized == "high":
-        return high
-    return medium
+        return Decimal(str(high))
+    return Decimal(str(medium))
 
 
 def generate_monthly_plan(allowance: float, month: str, fixed_commitments: dict, user_preferences: dict, behavior: dict | None = None) -> dict:
@@ -590,14 +592,14 @@ def generate_monthly_plan(allowance: float, month: str, fixed_commitments: dict,
         "Mokhatlo": round(fixed_commitments.get("Mokhatlo", 0), 2),
         "Savings": round(fixed_commitments.get("Savings", 0), 2),
     }
-    emergency = max(round(allowance * 0.07, 2), 50 if allowance >= 800 else 0)
+    emergency = max(round(allowance * Decimal('0.07'), 2), 50 if allowance >= 800 else 0)
     protected["Emergency"] = emergency
     protected_total = sum(protected.values())
     flexible_pool = max(allowance - protected_total, 0)
-    food_weight = preference_multiplier(user_preferences.get("food_priority"), 0.42, 0.5, 0.58)
-    snack_weight = preference_multiplier(user_preferences.get("snack_level"), 0.08, 0.13, 0.18)
-    cosmetics_weight = preference_multiplier(user_preferences.get("cosmetics_level"), 0.05, 0.1, 0.15)
-    transport_weight = 0.08
+    food_weight = preference_multiplier(user_preferences.get("food_priority"), Decimal('0.42'), Decimal('0.5'), Decimal('0.58'))
+    snack_weight = preference_multiplier(user_preferences.get("snack_level"), Decimal('0.08'), Decimal('0.13'), Decimal('0.18'))
+    cosmetics_weight = preference_multiplier(user_preferences.get("cosmetics_level"), Decimal('0.05'), Decimal('0.1'), Decimal('0.15'))
+    transport_weight = Decimal('0.08')
     total_weight = food_weight + snack_weight + cosmetics_weight + transport_weight
     plan = {
         "Food": round(flexible_pool * food_weight / total_weight, 2),
@@ -626,7 +628,7 @@ def generate_monthly_plan(allowance: float, month: str, fixed_commitments: dict,
         recommendations.insert(0, "Fixed commitments exceed the allowance. Set flexible spending to R0 and review commitments.")
     base = decision(
         status,
-        0.82,
+        Decimal('0.82'),
         "Plan protects Savings and Emergency, then essentials, then flexible preferences and past spending behavior.",
         recommendations,
         {

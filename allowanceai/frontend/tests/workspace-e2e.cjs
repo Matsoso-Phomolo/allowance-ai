@@ -61,6 +61,7 @@ const root = process.env.WORKSPACE_TEST_URL || "http://127.0.0.1:5173";
       .locator("strong");
   }
   async function screenshot(name) {
+    if (process.env.WORKSPACE_SKIP_SCREENSHOTS === "1") return;
     await page.screenshot({
       path: require("node:path").join(__dirname, "../../docs/" + name),
       fullPage: true,
@@ -122,11 +123,13 @@ const root = process.env.WORKSPACE_TEST_URL || "http://127.0.0.1:5173";
   await page.getByRole("button", { name: "Save Budget", exact: true }).click();
   await page.getByText("Budget saved for 2020-01.", { exact: true }).waitFor();
   await page.waitForFunction(
-    () => document.querySelector("input[name=allowance]")?.value === "750",
+    () =>
+      Number(document.querySelector("input[name=allowance]")?.value) === 750,
   );
   await page.getByLabel("Month", { exact: true }).fill(currentMonth);
   await page.waitForFunction(
-    () => document.querySelector("input[name=allowance]")?.value === "1000.5",
+    () =>
+      Number(document.querySelector("input[name=allowance]")?.value) === 1000.5,
   );
   console.log(
     "PASS month-specific budget editing without replacing the current month",
@@ -218,6 +221,9 @@ const root = process.env.WORKSPACE_TEST_URL || "http://127.0.0.1:5173";
   assert.equal(await amount("Actual expenditure").innerText(), "M 0.00");
   assert.equal(await page.getByText("Lunch", { exact: true }).count(), 0);
   await navigate("Savings & planning");
+  await page
+    .getByText("Legacy allocation suggestion tool", { exact: true })
+    .click();
   for (const label of ["Allowance", "Data / Contract", "Mokhatlo", "Savings"])
     assert.equal(
       await page.getByLabel(label, { exact: true }).inputValue(),
@@ -267,16 +273,46 @@ const root = process.env.WORKSPACE_TEST_URL || "http://127.0.0.1:5173";
   console.log(
     "PASS logout/login persistence, second-user isolation, empty analytics and explicitly configured zero budget",
   );
-  await page.setViewportSize({width:1440,height:1000});
-  for (const route of ["budget","categories","recent-expenses","add-expense","add-category","graphs","spending-timetable","monthly-planner","category-survival","ai-recommendations","budget-intelligence","monthly-insights","can-i-buy","shopping-list","alerts","profile","notifications"]) {
-    await page.goto(root+"/app/"+route);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  for (const route of [
+    "budget",
+    "categories",
+    "recent-expenses",
+    "add-expense",
+    "add-category",
+    "graphs",
+    "spending-timetable",
+    "monthly-planner",
+    "category-survival",
+    "ai-recommendations",
+    "budget-intelligence",
+    "monthly-insights",
+    "can-i-buy",
+    "shopping-list",
+    "alerts",
+    "profile",
+    "notifications",
+  ]) {
+    await page.goto(root + "/app/" + route);
     await page.locator(".workspace-page-heading h1").waitFor();
-    await page.locator(".section-skeleton").waitFor({state:"detached"});
-    if(route === "graphs") await page.locator(".recharts-wrapper").first().waitFor();
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,"Module overflow "+route);
+    await page.locator(".section-skeleton").waitFor({ state: "detached" });
+    if (route === "graphs")
+      await page.locator(".recharts-wrapper").first().waitFor();
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+      "Module overflow " + route,
+    );
   }
-  await page.goto(root+"/app/admin");await page.getByRole("heading",{name:"Access restricted",exact:true}).waitFor();
-  console.log("PASS all retained module routes, real charts, notifications and role-gated administration");
+  await page.goto(root + "/app/admin");
+  await page
+    .getByRole("heading", { name: "Access restricted", exact: true })
+    .waitFor();
+  console.log(
+    "PASS all retained module routes, real charts, notifications and role-gated administration",
+  );
   assert.deepEqual(errors, []);
   await browser.close();
   console.log("PASS real API browser workflow without runtime exceptions");

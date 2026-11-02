@@ -1,0 +1,3 @@
+# Installation/audit tooling, not application runtime dependencies.
+-r requirements-bootstrap.txt
+pip-audit==2.10.1

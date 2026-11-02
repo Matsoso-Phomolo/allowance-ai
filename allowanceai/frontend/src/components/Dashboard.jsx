@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import WorkspaceOverview from "./WorkspaceOverview";
+import ItemWorkspace from "./ItemWorkspace";
+import ItemAnalytics from "./ItemAnalytics";
 import WorkspaceIcon from "./WorkspaceIcon";
 import NotificationCenter from "./NotificationCenter";
 import {
@@ -60,6 +62,7 @@ export default function Dashboard({
   timetable,
   user,
   notifications,
+  onRefresh,
   onMarkNotificationRead,
   onMarkAllNotificationsRead,
   onDeleteNotification,
@@ -138,7 +141,11 @@ export default function Dashboard({
       title: "Add Expense",
       summary: "Record new spending.",
       content: (
-        <ExpenseForm categories={categories} onAddExpense={onAddExpense} />
+        <ExpenseForm
+          userId={user.id}
+          categories={categories}
+          onAddExpense={onAddExpense}
+        />
       ),
     },
     {
@@ -170,10 +177,20 @@ export default function Dashboard({
     {
       id: "monthly-planner",
       title: "Monthly Planner",
-      summary: "Generate a suggested monthly split.",
+      summary: "Plan items, reserve savings and compare actual purchases.",
       content: (
         <Suspense fallback={<SectionSkeleton title="Loading planner" />}>
-          <MonthlyPlanner budget={budget} onCreatePlan={createMonthlyPlan} />
+          <ItemWorkspace
+            key="monthly"
+            userId={user.id}
+            kind="monthly"
+            budget={budget}
+            onRefresh={onRefresh}
+          />
+          <details className="panel">
+            <summary>Legacy allocation suggestion tool</summary>
+            <MonthlyPlanner budget={budget} onCreatePlan={createMonthlyPlan} />
+          </details>
         </Suspense>
       ),
     },
@@ -221,17 +238,28 @@ export default function Dashboard({
     {
       id: "shopping-list",
       title: "Shopping List",
-      summary: "Check several purchases at once.",
+      summary: "Plan quantities and confirm partial purchases.",
       content: (
         <Suspense fallback={<SectionSkeleton title="Loading evaluator" />}>
-          <ShoppingListEvaluator
-            categories={categories}
-            onDeleteShoppingList={onDeleteShoppingList}
-            onEvaluate={evaluateList}
-            onSaveShoppingList={onSaveShoppingList}
-            onUpdateShoppingList={onUpdateShoppingList}
-            savedShoppingLists={savedShoppingLists}
+          <ItemWorkspace
+            key="shopping"
+            userId={user.id}
+            kind="shopping"
+            budget={budget}
+            onRefresh={onRefresh}
+            legacyLists={savedShoppingLists}
           />
+          <details className="panel">
+            <summary>Legacy shopping evaluator and saved lists</summary>
+            <ShoppingListEvaluator
+              categories={categories}
+              onDeleteShoppingList={onDeleteShoppingList}
+              onEvaluate={evaluateList}
+              onSaveShoppingList={onSaveShoppingList}
+              onUpdateShoppingList={onUpdateShoppingList}
+              savedShoppingLists={savedShoppingLists}
+            />
+          </details>
         </Suspense>
       ),
     },
@@ -404,6 +432,13 @@ export default function Dashboard({
         action="Create category"
         onAction={() => handleSectionSelect("add-category")}
       />
+    );
+  if (selectedSection.id === "graphs")
+    content = (
+      <>
+        <ItemAnalytics />
+        {content}
+      </>
     );
   function handleSectionSelect(sectionId) {
     navigate(`/app/${sectionId}`);

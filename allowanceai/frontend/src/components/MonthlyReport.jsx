@@ -150,12 +150,12 @@ export default function MonthlyReport({ report }) {
 
   const categoryChart = report.category_summary.map((category) => ({
     name: category.name,
-    spent: category.spent_amount,
-    planned: category.planned_amount,
+    spent: Number(category.spent_amount),
+    planned: Number(category.planned_amount),
   }));
   const expenseCategoryChart = report.category_summary.map((category) => ({
     name: category.name,
-    amount: category.spent_amount,
+    amount: Number(category.spent_amount),
   }));
 
   function exportExpenses() {

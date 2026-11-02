@@ -1,4 +1,7 @@
 import calendar
+import json
+import hashlib
+from decimal import Decimal
 from datetime import date, datetime, timedelta
 
 from fastapi import HTTPException
@@ -9,6 +12,7 @@ import auth
 import decision_engine
 import models
 import schemas
+from finance import financial_write, lock_user, decimal, money, rounded as round
 
 
 def create_user(db: Session, user_data: schemas.UserCreate):
@@ -77,6 +81,7 @@ def create_notification(
     message: str,
     notification_type: str = "info",
     dedupe_hours: int = 24,
+    commit: bool = True,
 ):
     cutoff = datetime.utcnow() - timedelta(hours=dedupe_hours)
     existing = (
@@ -100,7 +105,9 @@ def create_notification(
         is_read=False,
     )
     db.add(notification)
-    db.commit()
+    db.flush()
+    if commit:
+        db.commit()
     db.refresh(notification)
     return notification
 
@@ -147,7 +154,7 @@ def generate_budget_notifications(db: Session, user: models.User):
 
     allowance = summary.get("allowance", 0) or 0
     remaining = summary.get("remaining_money", 0) or 0
-    if allowance > 0 and 0 <= remaining <= allowance * 0.15:
+    if allowance > 0 and 0 <= remaining <= allowance * Decimal("0.15"):
         create_notification(
             db,
             user,
@@ -192,7 +199,7 @@ def get_monthly_insights(db: Session, user: models.User, notify: bool = True) ->
     current_start, current_end = month_bounds()
     previous_start, previous_end = month_bounds(shift_month(current_start, -1))
     budget = get_current_budget(db, user)
-    allowance = budget.allowance if budget else 0
+    allowance = budget.allowance if budget else Decimal(0)
 
     categories = get_categories(db, user)
     current_expenses = expenses_between(db, user, current_start, current_end)
@@ -200,13 +207,13 @@ def get_monthly_insights(db: Session, user: models.User, notify: bool = True) ->
     current_spend = category_spend_for_expenses(current_expenses)
     previous_spend = category_spend_for_expenses(previous_expenses)
     monthly_categories = category_views_for_spend(categories, current_spend)
-    current_total_spent = round(sum(current_spend.values()), 2)
+    current_total_spent = sum(current_spend.values(), Decimal(0))
     summary = {
-        "allowance": round(allowance, 2),
-        "total_planned": round(sum(category["planned_amount"] for category in categories), 2),
+        "allowance": allowance,
+        "total_planned": sum((category["planned_amount"] for category in categories), Decimal(0)),
         "total_spent": current_total_spent,
-        "remaining_money": round(allowance - current_total_spent, 2),
-        "savings_target": round(budget.savings_target if budget else 0, 2),
+        "remaining_money": (allowance - current_total_spent),
+        "savings_target": (budget.savings_target if budget else Decimal(0)),
         "budget_status": decision_engine.get_budget_status(allowance - current_total_spent, allowance),
     }
     behavior = behavior_for_expenses(current_expenses)
@@ -224,7 +231,7 @@ def get_monthly_insights(db: Session, user: models.User, notify: bool = True) ->
         if current_amount <= 0:
             continue
         growth_amount = current_amount - previous_amount
-        growth_ratio = current_amount if previous_amount == 0 else growth_amount / previous_amount
+        growth_ratio = current_amount if previous_amount == 0 else decimal(growth_amount) / decimal(previous_amount)
         growth_rows.append((growth_ratio, growth_amount, category))
     fastest_growing = max(growth_rows, key=lambda item: (item[0], item[1]), default=None)
     fastest_growing_category = fastest_growing[2] if fastest_growing else None
@@ -463,7 +470,9 @@ def delete_notification(db: Session, notification_id: int, user: models.User) ->
 
 
 def export_user_data(db: Session, user: models.User) -> dict:
+    import item_service
     return {
+        "item_plans": item_service.list_plans(db, user),
         "user": {
             "id": user.id,
             "name": user.name,
@@ -474,11 +483,12 @@ def export_user_data(db: Session, user: models.User) -> dict:
             {
                 "id": budget.id,
                 "month": budget.month,
-                "allowance": round(budget.allowance, 2),
-                "savings_target": round(budget.savings_target, 2),
+                "allowance": budget.allowance,
+                "savings_target": budget.savings_target,
             }
             for budget in db.query(models.Budget).filter(models.Budget.user_id == user.id).order_by(models.Budget.id.asc()).all()
         ],
+        "category_allocations": [{"category_id": row.category_id, "month": row.month, "amount": row.amount, "origin": row.origin} for row in db.query(models.CategoryAllocation).filter_by(user_id=user.id)],
         "categories": get_categories(db, user),
         "expenses": get_expenses(db, user),
         "reports": {
@@ -492,7 +502,16 @@ def export_user_data(db: Session, user: models.User) -> dict:
     }
 
 
+@financial_write
 def delete_user_account(db: Session, user: models.User) -> dict:
+    from item_models import SpendingPlan, PlannedItem, PurchaseEvent, PurchaseLine, CategoryPreference
+    events = [row[0] for row in db.query(PurchaseEvent.id).filter_by(user_id=user.id)]
+    plans = [row[0] for row in db.query(SpendingPlan.id).filter_by(user_id=user.id)]
+    db.query(PurchaseLine).filter(PurchaseLine.event_id.in_(events)).delete(synchronize_session=False)
+    db.query(PurchaseEvent).filter_by(user_id=user.id).delete(synchronize_session=False)
+    db.query(PlannedItem).filter(PlannedItem.plan_id.in_(plans)).delete(synchronize_session=False)
+    db.query(SpendingPlan).filter_by(user_id=user.id).delete(synchronize_session=False)
+    db.query(CategoryPreference).filter_by(user_id=user.id).delete(synchronize_session=False)
     shopping_list_ids = [row[0] for row in db.query(models.ShoppingList.id).filter(models.ShoppingList.user_id == user.id).all()]
     if shopping_list_ids:
         db.query(models.ShoppingListItem).filter(models.ShoppingListItem.shopping_list_id.in_(shopping_list_ids)).delete(synchronize_session=False)
@@ -500,14 +519,17 @@ def delete_user_account(db: Session, user: models.User) -> dict:
     db.query(models.CategoryDailyTotal).filter(models.CategoryDailyTotal.user_id == user.id).delete()
     db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id).delete()
     db.query(models.Notification).filter(models.Notification.user_id == user.id).delete()
+    db.query(models.ExpenseOperation).filter_by(user_id=user.id).delete()
     db.query(models.Expense).filter(models.Expense.user_id == user.id).delete()
+    db.query(models.CategoryAllocation).filter_by(user_id=user.id).delete()
     db.query(models.Category).filter(models.Category.user_id == user.id).delete()
     db.query(models.Budget).filter(models.Budget.user_id == user.id).delete()
     db.delete(user)
-    db.commit()
+    db.flush()
     return {"message": "Account deleted."}
 
 
+@financial_write
 def create_budget(db: Session, budget: schemas.BudgetCreate, user: models.User):
     db_budget = get_current_budget(db, user, budget.month)
     if db_budget is None:
@@ -515,7 +537,7 @@ def create_budget(db: Session, budget: schemas.BudgetCreate, user: models.User):
     db_budget.allowance = budget.allowance
     db_budget.savings_target = budget.savings_target
     db.add(db_budget)
-    db.commit()
+    db.flush()
     db.refresh(db_budget)
     return db_budget
 
@@ -529,18 +551,31 @@ def get_current_budget(db: Session, user: models.User, month: str | None = None)
 
 def get_total_spent(db: Session, user: models.User, month: str | None = None) -> float:
     start, end = month_bounds(date.fromisoformat(f"{month}-01") if month else None)
-    return db.query(func.coalesce(func.sum(models.Expense.amount), 0)).filter(
+    return decimal(db.query(func.coalesce(func.sum(models.Expense.amount), 0)).filter(
         models.Expense.user_id == user.id,
         models.Expense.expense_date >= start,
         models.Expense.expense_date <= end,
-    ).scalar() or 0
+    ).scalar() or 0)
 
 
-def get_total_planned(db: Session, user: models.User) -> float:
-    return db.query(func.coalesce(func.sum(models.Category.planned_amount), 0)).filter(models.Category.user_id == user.id).scalar() or 0
+def get_total_planned(db: Session, user: models.User, month: str | None = None):
+    month = month or date.today().strftime("%Y-%m")
+    return decimal(db.query(func.coalesce(func.sum(models.CategoryAllocation.amount), 0)).filter_by(user_id=user.id, month=month).scalar())
 
 
-def rebuild_behavior_tracking(db: Session, user: models.User):
+def set_allocation(db, user, category, month, amount, origin="explicit"):
+    row = db.query(models.CategoryAllocation).filter_by(user_id=user.id, category_id=category.id, month=month).first()
+    if not row:
+        row = models.CategoryAllocation(user_id=user.id, category_id=category.id, month=month)
+        db.add(row)
+    row.amount, row.origin = amount, origin
+    db.flush()
+    return row
+
+
+def _rebuild_behavior_tracking(db: Session, user: models.User):
+    lock_user(db, user)
+    db.flush()
     db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id).delete()
     db.query(models.CategoryDailyTotal).filter(models.CategoryDailyTotal.user_id == user.id).delete()
 
@@ -569,32 +604,24 @@ def rebuild_behavior_tracking(db: Session, user: models.User):
                 user_id=user.id,
             )
         )
-    db.commit()
+    db.flush()
+
+
+
+def rebuild_behavior_tracking(db: Session, user: models.User, commit: bool = True):
+    if not commit:
+        return _rebuild_behavior_tracking(db, user)
+    return _committed_rebuild(db, user)
+
+
+@financial_write
+def _committed_rebuild(db, user):
+    return _rebuild_behavior_tracking(db, user)
 
 
 def get_behavior_metrics(db: Session, user: models.User) -> dict:
     start, end = month_bounds()
-    daily_logs = db.query(models.DailySpendingLog).filter(models.DailySpendingLog.user_id == user.id, models.DailySpendingLog.spending_date >= start, models.DailySpendingLog.spending_date <= end).order_by(models.DailySpendingLog.spending_date.asc()).all()
-    category_logs = (
-        db.query(models.CategoryDailyTotal)
-        .filter(models.CategoryDailyTotal.user_id == user.id, models.CategoryDailyTotal.spending_date >= start, models.CategoryDailyTotal.spending_date <= end)
-        .order_by(models.CategoryDailyTotal.category_name.asc(), models.CategoryDailyTotal.spending_date.asc())
-        .all()
-    )
-    raw_behavior = {
-        "daily_spending_log": [
-            {"date": log.spending_date.isoformat(), "total_amount": round(log.total_amount, 2)} for log in daily_logs
-        ],
-        "category_daily_totals": [
-            {
-                "date": log.spending_date.isoformat(),
-                "category_name": log.category_name,
-                "total_amount": round(log.total_amount, 2),
-            }
-            for log in category_logs
-        ],
-    }
-    return {**raw_behavior, **decision_engine.behavior_summary(raw_behavior)}
+    return behavior_for_expenses(expenses_between(db, user, start, end))
 
 
 def month_bounds(target: date | None = None) -> tuple[date, date]:
@@ -635,8 +662,8 @@ def category_spend_for_expenses(expenses: list[models.Expense]) -> dict[str, flo
 def category_views_for_spend(categories: list[dict], category_spend: dict[str, float]) -> list[dict]:
     monthly_categories = []
     for category in categories:
-        spent = round(category_spend.get(category["name"], 0), 2)
-        remaining = round(category["planned_amount"] - spent, 2)
+        spent = category_spend.get(category["name"], Decimal(0))
+        remaining = category["planned_amount"] - spent
         percentage = round((spent / category["planned_amount"] * 100) if category["planned_amount"] else (100 if spent > 0 else 0), 2)
         monthly_categories.append(
             {
@@ -661,14 +688,14 @@ def behavior_for_expenses(expenses: list[models.Expense]) -> dict:
 
     raw_behavior = {
         "daily_spending_log": [
-            {"date": spending_date.isoformat(), "total_amount": round(total, 2)}
+            {"date": spending_date.isoformat(), "total_amount": total}
             for spending_date, total in sorted(daily_totals.items())
         ],
         "category_daily_totals": [
             {
                 "date": spending_date.isoformat(),
                 "category_name": category_name,
-                "total_amount": round(total, 2),
+                "total_amount": total,
             }
             for (spending_date, category_name), total in sorted(category_daily_totals.items())
         ],
@@ -679,32 +706,33 @@ def behavior_for_expenses(expenses: list[models.Expense]) -> dict:
 def get_budget_summary(db: Session, user: models.User, month: str | None = None) -> dict:
     month = month or date.today().strftime("%Y-%m")
     budget = get_current_budget(db, user, month)
-    allowance = budget.allowance if budget else 0
-    total_planned = get_total_planned(db, user)
+    allowance = budget.allowance if budget else Decimal(0)
+    total_planned = get_total_planned(db, user, month)
     total_spent = get_total_spent(db, user, month)
     remaining_money = allowance - total_spent
     return {
         "configured": budget is not None,
         "month": month,
-        "allowance": round(allowance, 2),
-        "total_planned": round(total_planned, 2),
-        "total_spent": round(total_spent, 2),
-        "remaining_money": round(remaining_money, 2),
-        "savings_target": round(budget.savings_target if budget else 0, 2),
+        "allowance": allowance,
+        "total_planned": total_planned,
+        "total_spent": total_spent,
+        "remaining_money": remaining_money,
+        "savings_target": (budget.savings_target if budget else Decimal(0)),
         "budget_status": decision_engine.get_budget_status(remaining_money, allowance) if budget else "unconfigured",
     }
 
 
+@financial_write
 def create_category(db: Session, category: schemas.CategoryCreate, user: models.User):
     existing = db.query(models.Category).filter(func.lower(models.Category.name) == category.name.lower(), models.Category.user_id == user.id).first()
     if existing:
         raise HTTPException(status_code=400, detail="Category already exists.")
 
-    db_category = models.Category(name=category.name.strip(), planned_amount=category.planned_amount, user_id=user.id)
+    db_category = models.Category(name=category.name.strip(), planned_amount=0, user_id=user.id)
     db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return db_category
+    db.flush()
+    set_allocation(db, user, db_category, category.month or date.today().strftime("%Y-%m"), category.planned_amount)
+    return {"id": db_category.id, "name": db_category.name, "planned_amount": category.planned_amount, "month": category.month or date.today().strftime("%Y-%m")}
 
 
 def get_category_by_id(db: Session, category_id: int, user: models.User):
@@ -718,6 +746,7 @@ def get_category_by_name(db: Session, name: str, user: models.User):
     return db.query(models.Category).filter(func.lower(models.Category.name) == name.lower(), models.Category.user_id == user.id).first()
 
 
+@financial_write
 def update_category(db: Session, category_id: int, category_update: schemas.CategoryCreate, user: models.User):
     category = get_category_by_id(db, category_id, user)
     duplicate = (
@@ -729,46 +758,59 @@ def update_category(db: Session, category_id: int, category_update: schemas.Cate
         raise HTTPException(status_code=400, detail="Another category already uses that name.")
 
     category.name = category_update.name.strip()
-    category.planned_amount = category_update.planned_amount
-    db.commit()
+    set_allocation(db, user, category, category_update.month or date.today().strftime("%Y-%m"), category_update.planned_amount)
+    db.flush()
     db.refresh(category)
-    return category
+    return {"id": category.id, "name": category.name, "planned_amount": category_update.planned_amount, "month": category_update.month or date.today().strftime("%Y-%m")}
 
 
+@financial_write
 def delete_category(db: Session, category_id: int, user: models.User):
     category = get_category_by_id(db, category_id, user)
+    from item_models import PlannedItem, CategoryPreference
+    if db.query(PlannedItem).filter_by(category_id=category.id).first():
+        raise HTTPException(409, "Category is used by planned items. Reassign those items first.")
+    db.query(CategoryPreference).filter_by(user_id=user.id, category_id=category.id).delete()
     expense_count = db.query(models.Expense).filter(models.Expense.category_id == category.id, models.Expense.user_id == user.id).count()
     if expense_count:
         raise HTTPException(status_code=400, detail="Cannot delete a category that has expenses.")
 
+    db.query(models.CategoryAllocation).filter_by(category_id=category.id, user_id=user.id).delete()
     db.delete(category)
-    db.commit()
+    db.flush()
     return {"message": "Category deleted."}
 
 
-def get_categories(db: Session, user: models.User) -> list[dict]:
-    start, end = month_bounds()
+def get_categories(db: Session, user: models.User, month: str | None = None) -> list[dict]:
+    month = month or date.today().strftime("%Y-%m")
+    start, end = month_bounds(date.fromisoformat(month + "-01"))
+    allocations = {row.category_id: row for row in db.query(models.CategoryAllocation).filter_by(user_id=user.id, month=month)}
     categories = db.query(models.Category).filter(models.Category.user_id == user.id).order_by(models.Category.name.asc()).all()
     results = []
 
     for category in categories:
+        allocation = allocations.get(category.id)
+        planned_amount = allocation.amount if allocation else Decimal(0)
         spent = (
             db.query(func.coalesce(func.sum(models.Expense.amount), 0))
             .filter(models.Expense.category_id == category.id, models.Expense.user_id == user.id, models.Expense.expense_date >= start, models.Expense.expense_date <= end)
             .scalar()
             or 0
         )
-        remaining = category.planned_amount - spent
-        percentage = (spent / category.planned_amount * 100) if category.planned_amount else (100 if spent > 0 else 0)
+        spent = decimal(spent)
+        remaining = planned_amount - spent
+        percentage = (spent / planned_amount * 100) if planned_amount else (100 if spent > 0 else 0)
         status = decision_engine.get_category_status(percentage, category.name, remaining)
 
         results.append(
             {
                 "id": category.id,
+                "month": month,
+                "allocation_origin": allocation.origin if allocation else "unconfigured",
                 "name": category.name,
-                "planned_amount": round(category.planned_amount, 2),
-                "spent_amount": round(spent, 2),
-                "remaining_amount": round(remaining, 2),
+                "planned_amount": planned_amount,
+                "spent_amount": spent,
+                "remaining_amount": remaining,
                 "percentage_used": round(percentage, 2),
                 "status": status,
                 "status_label": decision_engine.get_category_status_label(category.name, percentage, remaining),
@@ -778,7 +820,15 @@ def get_categories(db: Session, user: models.User) -> list[dict]:
     return results
 
 
+@financial_write
 def add_expense(db: Session, expense: schemas.ExpenseCreate, user: models.User):
+    fingerprint = hashlib.sha256(json.dumps(expense.model_dump(mode='json', exclude={'operation_key'}), sort_keys=True).encode()).hexdigest()
+    if expense.operation_key:
+        operation = db.query(models.ExpenseOperation).filter_by(user_id=user.id, operation_key=expense.operation_key).first()
+        if operation:
+            if operation.request_hash != fingerprint:
+                raise HTTPException(409, "Operation key already used for different expense details.")
+            return json.loads(operation.response_json)
     category = get_category_by_name(db, expense.category_name, user)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found.")
@@ -791,22 +841,28 @@ def add_expense(db: Session, expense: schemas.ExpenseCreate, user: models.User):
         user_id=user.id,
     )
     db.add(db_expense)
-    db.commit()
-    db.refresh(db_expense)
-    rebuild_behavior_tracking(db, user)
+    db.flush()
+    rebuild_behavior_tracking(db, user, commit=False)
     updated_category = next(
-        category_data for category_data in get_categories(db, user) if category_data["id"] == category.id
+        category_data for category_data in get_categories(db, user, db_expense.expense_date.strftime("%Y-%m")) if category_data["id"] == category.id
     )
-    return {
+    result = {
         "expense": {
             "id": db_expense.id,
             "item_name": db_expense.item_name,
-            "amount": round(db_expense.amount, 2),
+            "amount": db_expense.amount,
             "category_name": db_expense.category.name,
             "expense_date": db_expense.expense_date,
         },
         "feedback": decision_engine.expense_entry_feedback(updated_category),
     }
+
+    if expense.operation_key:
+        from fastapi.encoders import jsonable_encoder
+        result = jsonable_encoder(result, custom_encoder={Decimal: lambda value: format(value, 'f')})
+        db.add(models.ExpenseOperation(user_id=user.id, operation_key=expense.operation_key,
+                                       request_hash=fingerprint, response_json=json.dumps(result)))
+    return result
 
 
 def get_expense_by_id(db: Session, expense_id: int, user: models.User):
@@ -816,8 +872,10 @@ def get_expense_by_id(db: Session, expense_id: int, user: models.User):
     return expense
 
 
+@financial_write
 def update_expense(db: Session, expense_id: int, expense_update: schemas.ExpenseCreate, user: models.User):
     expense = get_expense_by_id(db, expense_id, user)
+    guard_linked_expense(db, expense_id)
     category = get_category_by_name(db, expense_update.category_name, user)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found.")
@@ -826,17 +884,16 @@ def update_expense(db: Session, expense_id: int, expense_update: schemas.Expense
     expense.amount = expense_update.amount
     expense.category_id = category.id
     expense.expense_date = expense_update.expense_date or expense.expense_date
-    db.commit()
-    db.refresh(expense)
-    rebuild_behavior_tracking(db, user)
+    db.flush()
+    rebuild_behavior_tracking(db, user, commit=False)
     updated_category = next(
-        category_data for category_data in get_categories(db, user) if category_data["id"] == category.id
+        category_data for category_data in get_categories(db, user, expense.expense_date.strftime("%Y-%m")) if category_data["id"] == category.id
     )
     return {
         "expense": {
             "id": expense.id,
             "item_name": expense.item_name,
-            "amount": round(expense.amount, 2),
+            "amount": expense.amount,
             "category_name": expense.category.name,
             "expense_date": expense.expense_date,
         },
@@ -844,11 +901,13 @@ def update_expense(db: Session, expense_id: int, expense_update: schemas.Expense
     }
 
 
+@financial_write
 def delete_expense(db: Session, expense_id: int, user: models.User):
     expense = get_expense_by_id(db, expense_id, user)
+    guard_linked_expense(db, expense_id)
     db.delete(expense)
-    db.commit()
-    rebuild_behavior_tracking(db, user)
+    db.flush()
+    rebuild_behavior_tracking(db, user, commit=False)
     return {"message": "Expense deleted."}
 
 
@@ -858,11 +917,15 @@ def get_expenses(db: Session, user: models.User, month: str | None = None) -> li
         start, end = month_bounds(date.fromisoformat(f"{month}-01"))
         query = query.filter(models.Expense.expense_date >= start, models.Expense.expense_date <= end)
     expenses = query.order_by(models.Expense.expense_date.desc(), models.Expense.id.desc()).all()
+    from item_models import PurchaseLine
+    links = {line.expense_id: line for line in db.query(PurchaseLine).join(models.Expense, PurchaseLine.expense_id == models.Expense.id).filter(models.Expense.user_id == user.id)}
     return [
         {
             "id": expense.id,
+            "purchase_event_id": links[expense.id].event_id if expense.id in links else None,
+            "originating_item_id": links[expense.id].item_id if expense.id in links else None,
             "item_name": expense.item_name,
-            "amount": round(expense.amount, 2),
+            "amount": expense.amount,
             "category_name": expense.category.name,
             "expense_date": expense.expense_date,
         }
@@ -930,7 +993,7 @@ def serialize_shopping_list(shopping_list: models.ShoppingList) -> dict:
             {
                 "id": item.id,
                 "item_name": item.item_name,
-                "amount": round(item.amount, 2),
+                "amount": item.amount,
                 "category_name": item.category_name,
                 "created_at": item.created_at,
             }
@@ -960,6 +1023,7 @@ def get_shopping_lists(db: Session, user: models.User) -> list[dict]:
     return [serialize_shopping_list(shopping_list) for shopping_list in shopping_lists]
 
 
+@financial_write
 def create_shopping_list(db: Session, request: schemas.ShoppingListCreate, user: models.User) -> dict:
     items = [item.model_dump() for item in request.items]
     evaluation = evaluate_shopping_list_items(db, user, items)
@@ -979,12 +1043,13 @@ def create_shopping_list(db: Session, request: schemas.ShoppingListCreate, user:
         for item in items
     ]
     db.add(shopping_list)
-    db.commit()
+    db.flush()
     db.refresh(shopping_list)
-    create_notification(db, user, "Shopping list saved", "Shopping list saved successfully.", "success")
+    create_notification(db, user, "Shopping list saved", "Shopping list saved successfully.", "success", commit=False)
     return serialize_shopping_list(shopping_list)
 
 
+@financial_write
 def update_shopping_list(db: Session, list_id: int, request: schemas.ShoppingListUpdate, user: models.User) -> dict:
     shopping_list = get_shopping_list_by_id(db, list_id, user)
     if request.name is not None:
@@ -1006,15 +1071,19 @@ def update_shopping_list(db: Session, list_id: int, request: schemas.ShoppingLis
         ]
 
     shopping_list.updated_at = datetime.utcnow()
-    db.commit()
+    db.flush()
     db.refresh(shopping_list)
     return serialize_shopping_list(shopping_list)
 
 
+@financial_write
 def delete_shopping_list(db: Session, list_id: int, user: models.User) -> dict:
+    from item_models import SpendingPlan
+    if db.query(SpendingPlan).filter_by(legacy_list_id=list_id, user_id=user.id).first():
+        raise HTTPException(409, "Imported lists are retained as the source of the item ledger.")
     shopping_list = get_shopping_list_by_id(db, list_id, user)
     db.delete(shopping_list)
-    db.commit()
+    db.flush()
     return {"message": "Shopping list deleted."}
 
 
@@ -1087,7 +1156,7 @@ def get_admin_stats(db: Session) -> dict:
         "total_budgets": db.query(models.Budget).count(),
         "total_categories": db.query(models.Category).count(),
         "total_expenses": db.query(models.Expense).count(),
-        "total_tracked_spending": round(total_spending, 2),
+        "total_tracked_spending": total_spending,
     }
 
 
@@ -1103,3 +1172,9 @@ def get_admin_users(db: Session) -> list[dict]:
         }
         for user in users
     ]
+
+
+def guard_linked_expense(db, expense_id):
+    from item_models import PurchaseLine
+    if db.query(PurchaseLine).filter_by(expense_id=expense_id).first():
+        raise HTTPException(409, "Confirmed purchase expenses are immutable. Their purchase history must remain reconciled.")

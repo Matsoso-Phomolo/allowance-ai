@@ -13,7 +13,7 @@ export default function CanIBuy({ categories, onCheck }) {
     event.preventDefault();
     const result = await onCheck({
       ...form,
-      amount: Number(form.amount),
+      amount: form.amount,
     });
     setDecision(result);
   }
@@ -30,7 +30,9 @@ export default function CanIBuy({ categories, onCheck }) {
           <input
             required
             value={form.item_name}
-            onChange={(event) => setForm({ ...form, item_name: event.target.value })}
+            onChange={(event) =>
+              setForm({ ...form, item_name: event.target.value })
+            }
             placeholder="New snack, data, cosmetic item"
           />
         </label>
@@ -42,7 +44,9 @@ export default function CanIBuy({ categories, onCheck }) {
               required
               type="number"
               value={form.amount}
-              onChange={(event) => setForm({ ...form, amount: event.target.value })}
+              onChange={(event) =>
+                setForm({ ...form, amount: event.target.value })
+              }
               placeholder="0.00"
             />
           </label>
@@ -51,7 +55,9 @@ export default function CanIBuy({ categories, onCheck }) {
             <select
               required
               value={form.category_name || categories[0]?.name || ""}
-              onChange={(event) => setForm({ ...form, category_name: event.target.value })}
+              onChange={(event) =>
+                setForm({ ...form, category_name: event.target.value })
+              }
             >
               {categories.map((category) => (
                 <option key={category.id} value={category.name}>
@@ -65,13 +71,26 @@ export default function CanIBuy({ categories, onCheck }) {
       </form>
 
       {decision && (
-        <div className={`decision ${decision.status ? decision.status.toLowerCase() : decision.approved ? "safe" : "danger"}`}>
-          <strong>{decision.approved ? "Approved" : "Rejected"} {decision.risk_score != null ? `- Risk ${decision.risk_score}/100` : ""}</strong>
+        <div
+          className={`decision ${decision.status ? decision.status.toLowerCase() : decision.approved ? "safe" : "danger"}`}
+        >
+          <strong>
+            {decision.approved ? "Approved" : "Rejected"}{" "}
+            {decision.risk_score != null
+              ? `- Risk ${decision.risk_score}/100`
+              : ""}
+          </strong>
           <p>{decision.advice}</p>
           {decision.reasoning && <span>{decision.reasoning}</span>}
-          {decision.confidence != null && <span>Confidence: {Math.round(decision.confidence * 100)}%</span>}
-          <span>Money after purchase: {money(decision.money_after_purchase)}</span>
-          <span>Category after purchase: {money(decision.category_after_purchase)}</span>
+          {decision.confidence != null && (
+            <span>Confidence: {Math.round(decision.confidence * 100)}%</span>
+          )}
+          <span>
+            Money after purchase: {money(decision.money_after_purchase)}
+          </span>
+          <span>
+            Category after purchase: {money(decision.category_after_purchase)}
+          </span>
           {decision.recommendations?.length > 0 && (
             <div className="mini-list">
               <strong>Recommendations</strong>

@@ -20,7 +20,7 @@ Authenticated routes: `/app` (overview), `/app/overview`, `/app/notifications`, 
 
 Registration/login preserve the backend account flow and signed expiring bearer tokens. Existing token is stored in localStorage and restored via `/api/auth/me`. A non-login 401 clears the token and invalidates the displayed session. Login destinations accept only internal `/app` paths, preventing external redirects. Logout clears account state/token and returns home. Public pages do not await session restoration. Passwords use the existing salted PBKDF2 hashes. Browser storage remains a security consideration: use HTTPS and log out on shared devices.
 
-Profile includes export, account deletion and password change. Account deletion is destructive and remains subject to the existing confirmation flow. No production data migration or database reset is required by this release.
+Profile includes export, account deletion and password change. Account deletion is destructive and remains subject to the existing confirmation flow. The prepared item-ledger enhancement requires reviewed Alembic migrations before backend startup; it does not require a database reset. See ITEM-LEDGER-DEPLOYMENT.md.
 
 ## Local development
 
@@ -43,7 +43,7 @@ npm run dev
 npm run build
 ```
 
-Local API defaults to `http://127.0.0.1:8000`; frontend uses port 5173. Backend requires a PostgreSQL DATABASE_URL. Never commit environment secrets. Existing backend startup can create/adjust tables; use an isolated database for local tests. Do not run legacy migration scripts on production without review.
+Local API defaults to `http://127.0.0.1:8000`; frontend uses port 5173. Backend requires DATABASE_URL. Never commit environment secrets. PostgreSQL requires `python -m alembic upgrade head` before startup; schema changes are explicit and reviewed. SQLite is available for isolated local tests. Never enable ALLOWANCEAI_TEST_CREATE_SCHEMA in production. Do not run legacy copy/migration scripts on production.
 
 ## Production deployment
 
@@ -62,7 +62,7 @@ Manifest/icons and service worker are preserved. Installed apps intentionally st
 
 Worker uses network-first public resources and same-origin pages, skips cross-origin API traffic, caches successful responses and clears only old AllowanceAI cache names. Cached navigation/app resources may open offline; financial operations require connectivity. `/offline.html` is the final fallback. Test installation and offline behavior on real devices before release. Safe-area viewport and reduced-motion styling are included.
 
-Release version is `1.3.0`. Update `public/version.json` and `DEPLOYMENT_VERSION` in `public/sw.js` together for every release. App version reads the build-time JSON, avoiding stale Vercel version environment values. Polling displays an update banner when the deployed JSON differs. Existing `VITE_APP_VERSION` is no longer authoritative.
+Prepared item-ledger release version is `1.4.0`; it has not been pushed or deployed. Update `public/version.json` and `DEPLOYMENT_VERSION` in `public/sw.js` together for every release. App version reads the build-time JSON, avoiding stale Vercel version environment values. Polling displays an update banner when the deployed JSON differs. Existing `VITE_APP_VERSION` is no longer authoritative.
 
 ## Testing and troubleshooting
 
@@ -131,3 +131,44 @@ node tests/workspace-e2e.cjs
 ```
 
 On PowerShell use `$env:VITE_API_BASE_URL='http://127.0.0.1:8001'` before `npm run dev`. The browser workflow creates isolated test accounts, saves monthly budgets/categories/expenses, checks persistence and user isolation, and writes screenshots in docs/. It never seeds production or changes Neon/Render secrets. Stop the test API to remove its temporary database. See WORKSPACE-IMPLEMENTATION-REPORT.md for actual results and production limitations.
+
+
+## Item-driven planning and purchase ledger (prepared locally)
+
+Monthly Planner and Shopping Lists now share saved item workspaces: product/package metadata, quantities, Decimal estimates, automatic deterministic categorization with user corrections, partial purchases, explicit previews/confirmation and auditable linked expenses. Savings remain separate. Plan settings/estimates never create expenses. Existing tools remain in compatibility sections, and old lists can be explicitly imported once without changing their source. Analytics compares one selected plan without adding estimates to actual expenses.
+
+See [implementation plan](INTELLIGENT-BUDGETING-PLAN.md), [implementation report](INTELLIGENT-BUDGETING-REPORT.md), and [migration/release runbook with API contracts and complete checklist](ITEM-LEDGER-DEPLOYMENT.md). The runbook explains NUMERIC migration, immutable purchase history, idempotency, category allocation semantics and release sequencing. No external AI provider is configured; ambiguous products ask for review.
+
+Backend verification (from backend/):
+
+```text
+python -m pip install -r requirements-test.txt
+python -m unittest discover -s tests -p "test_*.py" -v
+python tests/run_local_postgres.py
+```
+
+The first suite forces isolated SQLite. The PostgreSQL runner accepts only a loopback PostgreSQL test server and creates/removes UUID-named temporary schemas; it must never use Neon credentials. It reads WORKSPACE_TEST_POSTGRES_URL or the existing local-only backend environment in memory. PostgreSQL tests cover true concurrent confirmations and transactional migration rollback.
+
+Real browser verification: start `python tests/serve_workspace_test.py` in backend/ (a disposable SQLite API on 8001), run Vite on 5173 with VITE_API_BASE_URL=http://127.0.0.1:8001, then run `node tests/items-e2e.cjs` in frontend/ with Playwright/Edge installed. The script is fixed to these local URLs and creates only disposable local accounts/records. It enters/partially buys rice through the UI and confirms 65 of 100 shopping items through the UI; 100-row setup uses the real local API. Set WORKSPACE_SKIP_SCREENSHOTS=1 when running the older workspace-e2e.cjs to retain the existing overview screenshots.
+
+
+## Production-readiness remediation (local, not deployed)
+
+See [READINESS-REMEDIATION.md](READINESS-REMEDIATION.md) and the remediation appendix in [PRODUCTION-READINESS-AUDIT.md](PRODUCTION-READINESS-AUDIT.md). Required head is now `0003_month_allocations`. Category allocations are month-scoped; old shared values are preserved as archival source values and copied only with `legacy_snapshot` provenance. New API money is Decimal serialized as exact strings, while historical sub-cent values remain unchanged. Financial writes/rebuilds share a transaction/user lock. Manual expense creates accept an optional operation_key for reliable retries; the bundled UI supplies and recovers it. Vite is pinned to patched 6.4.5. Production remains NO-GO until read-only Neon schema/history verification and backup/restore rehearsal are complete.
+
+To test both PostgreSQL session modes, set WORKSPACE_TEST_AUTOFLUSH to 0 and 1 respectively and run `python tests/run_local_postgres.py` for each mode. Never run that loopback-only runner with production credentials. The read-only production preflight is `python inspect_schema_readonly.py` with the intended securely injected environment; it does not load local .env or execute migrations.
+# Phase 9 security and infrastructure verification
+
+The local release candidate uses the patched backend stack documented in
+[PHASE9-RELEASE-GATES.md](PHASE9-RELEASE-GATES.md). Install the pinned
+`backend/requirements-bootstrap.txt` tooling before application/test requirements
+in a new virtual environment. Audit tools have separate requirements and should
+not be installed in the serving environment unnecessarily.
+
+Production remains **NO-GO** pending actual Neon identity/schema/history and an
+approved isolated backup/restore rehearsal. Follow
+[DATABASE-VERIFICATION-RUNBOOK.md](DATABASE-VERIFICATION-RUNBOOK.md); the read-only
+inspection helper now requires independently confirmed identity variables and
+does not load `.env`. Historical Phase 8 hashes/audit results describe the prior
+candidate, not the upgraded Phase 9 source. No deployment is authorized by these
+documents.

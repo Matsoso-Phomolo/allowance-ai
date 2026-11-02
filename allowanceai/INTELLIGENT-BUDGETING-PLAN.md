@@ -1,0 +1,9 @@
+# Intelligent budgeting implementation plan
+
+Audit: React/Vite App.jsx owns authenticated state; Dashboard.jsx routes existing modules. FastAPI main.py delegates to crud.py, auth.py and decision_engine.py. Nine legacy SQLAlchemy tables use floating-point amounts. Monthly planning is an unsaved rules-based percentage proposal; saved shopping items contain amount/name/category only. Expenses are independently entered and drive existing summaries and cached behavior logs. JWT ownership filters and admin dependencies already exist. No Alembic infrastructure or external AI provider is configured. Production remains Vercel/Render/PostgreSQL; no provider/credential changes are required.
+
+1. Add versioned Alembic baseline and forward-only ledger migration. Preserve existing rows and legacy API calculations while storing monetary columns in PostgreSQL NUMERIC. New planning and purchase calculations use Decimal with explicit cent rounding. No automatic production schema upgrade.
+2. Add reusable persisted plans/items, dictionary taxonomy and per-user confirmed category preferences. Plans and shopping lists share item semantics; legacy lists stay readable and can be explicitly imported once.
+3. Add transactional, user-serialized purchase confirmation, idempotency keys, immutable purchase snapshots and linked expenses. Derive pending quantities from purchase history. Add explicit budget application and plan/actual reconciliation.
+4. Reuse a responsive item workspace for monthly plans/shopping, purchase review and history, category correction, saved plans and analytics. Retain legacy tools under an explicit compatibility section.
+5. Execute SQLite and local PostgreSQL regressions, migration preservation/rollback/concurrency tests, frontend build and real API browser workflows including 100 items. Document actual results, migration procedure and limitations. Do not deploy or modify production data.

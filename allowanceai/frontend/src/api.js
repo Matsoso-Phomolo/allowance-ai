@@ -22,6 +22,8 @@ export function getAuthToken() {
 async function request(path, options = {}) {
   const requestToken = authToken;
   let response;
+  const requestError = (message) =>
+    Object.assign(new Error(message), { status: response?.status });
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
@@ -33,9 +35,9 @@ async function request(path, options = {}) {
     });
   } catch (error) {
     if (!navigator.onLine) {
-      throw new Error("You are offline. Reconnect and try again.");
+      throw requestError("You are offline. Reconnect and try again.");
     }
-    throw new Error(
+    throw requestError(
       "Could not connect. Check your connection and try again. If this continues, the service or browser connection settings may need attention.",
     );
   }
@@ -45,7 +47,7 @@ async function request(path, options = {}) {
       .json()
       .catch(() => ({ detail: "Request failed" }));
     if (response.status === 401 && path === "/api/auth/login") {
-      throw new Error("Invalid email or password.");
+      throw requestError("Invalid email or password.");
     }
     if (response.status === 401) {
       if (authToken === requestToken) {
@@ -57,20 +59,20 @@ async function request(path, options = {}) {
       throw expired;
     }
     if (response.status === 403) {
-      throw new Error("You do not have permission to access this feature.");
+      throw requestError("You do not have permission to access this feature.");
     }
     if (response.status === 400 && /email already/i.test(error.detail || "")) {
-      throw new Error(
+      throw requestError(
         "That email is already registered. Use login or another email.",
       );
     }
     if (response.status >= 500)
-      throw new Error(
+      throw requestError(
         "The service could not complete your request. Try again shortly.",
       );
     if (response.status === 422)
-      throw new Error("Please check the entered values and try again.");
-    throw new Error(
+      throw requestError("Please check the entered values and try again.");
+    throw requestError(
       typeof error.detail === "string"
         ? error.detail
         : "Request failed. Please check your details.",
@@ -134,6 +136,14 @@ export function getBudget(month) {
   return request(
     `/api/budget${month ? `?month=${encodeURIComponent(month)}` : ""}`,
   );
+}
+
+// Item-ledger amounts are decimal strings. The server calculates every saved total.
+export function itemRequest(path, method = "GET", data) {
+  return request(`/api${path}`, {
+    method,
+    ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+  });
 }
 
 export function createBudget(data) {

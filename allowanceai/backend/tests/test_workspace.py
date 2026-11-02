@@ -9,6 +9,7 @@ from pathlib import Path
 
 # Set before application imports: never load the developer or production database.
 os.environ["DATABASE_URL"] = "sqlite://"
+os.environ["ALLOWANCEAI_TEST_CREATE_SCHEMA"] = "1"
 os.environ["ALLOWANCEAI_SECRET_KEY"] = "isolated-regression-test-secret-not-for-production"
 os.environ.pop("ALLOWANCEAI_ADMIN_EMAILS", None)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -25,7 +26,20 @@ import models
 from database import Base, get_db
 
 
-class WorkspaceFinancialTests(unittest.TestCase):
+class ExactFinancialAssertions:
+    def assertEqual(self, actual, expected, msg=None):
+        # Existing tests were written for numeric JSON money. Retain their value
+        # assertions while the API now returns exact Decimal strings.
+        from decimal import Decimal
+        if isinstance(actual, str) and isinstance(expected, (int, float, Decimal)) and not isinstance(expected, bool):
+            try:
+                return super().assertEqual(Decimal(actual), Decimal(str(expected)), msg)
+            except __import__('decimal').InvalidOperation:
+                pass
+        return super().assertEqual(actual, expected, msg)
+
+
+class WorkspaceFinancialTests(ExactFinancialAssertions, unittest.TestCase):
     def setUp(self):
         self.schema = None
         self.admin_engine = None
@@ -48,7 +62,7 @@ class WorkspaceFinancialTests(unittest.TestCase):
             @event.listens_for(self.engine, "connect")
             def foreign_keys(connection, _):
                 connection.execute("PRAGMA foreign_keys=ON")
-        self.sessions = sessionmaker(bind=self.engine, expire_on_commit=False)
+        self.sessions = sessionmaker(bind=self.engine, autocommit=False, autoflush=os.getenv("WORKSPACE_TEST_AUTOFLUSH", "0") == "1", expire_on_commit=True)
         self.original_engine, self.original_sessions = main.engine, main.SessionLocal
         main.engine, main.SessionLocal = self.engine, self.sessions
         def test_db():
@@ -209,12 +223,19 @@ class WorkspaceFinancialTests(unittest.TestCase):
             self.assertEqual(db.query(models.Budget).count(), 0)
             self.assertEqual(db.query(models.Expense).count(), 1)
 
-    def test_models_compile_for_postgresql_without_schema_changes(self):
+    def test_models_compile_for_postgresql_and_have_ownership_paths(self):
         for table in Base.metadata.sorted_tables:
             ddl = str(CreateTable(table).compile(dialect=postgresql.dialect()))
             self.assertIn("CREATE TABLE",ddl)
-            if table.name not in {"users","shopping_list_items"}:
-                self.assertTrue(any(fk.target_fullname == "users.id" for fk in table.foreign_keys))
+            def reaches_user(candidate, seen=None):
+                seen = set() if seen is None else seen
+                if candidate.name == "users":
+                    return True
+                if candidate.name in seen:
+                    return False
+                seen.add(candidate.name)
+                return any(reaches_user(fk.column.table, seen.copy()) for fk in candidate.foreign_keys)
+            self.assertTrue(reaches_user(table), table.name)
 
 if __name__ == "__main__":
     unittest.main()

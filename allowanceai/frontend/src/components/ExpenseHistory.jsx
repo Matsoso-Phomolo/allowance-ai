@@ -1,9 +1,14 @@
 import { formatMoney as money } from "../currency";
 import { useState } from "react";
 
-
-export default function ExpenseHistory({ categories, expenses, onDeleteExpense, onUpdateExpense }) {
+export default function ExpenseHistory({
+  categories,
+  expenses,
+  onDeleteExpense,
+  onUpdateExpense,
+}) {
   const [editingId, setEditingId] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(12);
   const [form, setForm] = useState({
     item_name: "",
     amount: "",
@@ -28,7 +33,7 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
     event.preventDefault();
     const result = await onUpdateExpense(editingId, {
       ...form,
-      amount: Number(form.amount),
+      amount: form.amount,
     });
     setEditingId(null);
     setMessageType(result?.feedback?.type || "safe");
@@ -37,7 +42,9 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
 
   async function handleDelete(expense) {
     setMessage("");
-    const confirmed = window.confirm(`Delete ${expense.item_name} for ${money(expense.amount)}?`);
+    const confirmed = window.confirm(
+      `Delete ${expense.item_name} for ${money(expense.amount)}?`,
+    );
     if (!confirmed) {
       return;
     }
@@ -60,16 +67,24 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
         {expenses.length === 0 ? (
           <p className="empty-state">No expenses yet.</p>
         ) : (
-          expenses.slice(0, 12).map((expense) => (
-            <article className="expense-row expense-row-editable" key={expense.id}>
+          expenses.slice(0, visibleCount).map((expense) => (
+            <article
+              className="expense-row expense-row-editable"
+              key={expense.id}
+            >
               {editingId === expense.id ? (
-                <form className="category-edit-form expense-edit-form" onSubmit={handleUpdate}>
+                <form
+                  className="category-edit-form expense-edit-form"
+                  onSubmit={handleUpdate}
+                >
                   <label>
                     Item
                     <input
                       required
                       value={form.item_name}
-                      onChange={(event) => setForm({ ...form, item_name: event.target.value })}
+                      onChange={(event) =>
+                        setForm({ ...form, item_name: event.target.value })
+                      }
                     />
                   </label>
                   <div className="form-row">
@@ -80,7 +95,9 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
                         required
                         type="number"
                         value={form.amount}
-                        onChange={(event) => setForm({ ...form, amount: event.target.value })}
+                        onChange={(event) =>
+                          setForm({ ...form, amount: event.target.value })
+                        }
                       />
                     </label>
                     <label>
@@ -89,7 +106,9 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
                         required
                         type="date"
                         value={form.expense_date}
-                        onChange={(event) => setForm({ ...form, expense_date: event.target.value })}
+                        onChange={(event) =>
+                          setForm({ ...form, expense_date: event.target.value })
+                        }
                       />
                     </label>
                   </div>
@@ -98,7 +117,9 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
                     <select
                       required
                       value={form.category_name}
-                      onChange={(event) => setForm({ ...form, category_name: event.target.value })}
+                      onChange={(event) =>
+                        setForm({ ...form, category_name: event.target.value })
+                      }
                     >
                       {categories.map((category) => (
                         <option key={category.id} value={category.name}>
@@ -109,7 +130,11 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
                   </label>
                   <div className="category-actions">
                     <button type="submit">Save</button>
-                    <button className="secondary-button" type="button" onClick={() => setEditingId(null)}>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                    >
                       Cancel
                     </button>
                   </div>
@@ -125,20 +150,44 @@ export default function ExpenseHistory({ categories, expenses, onDeleteExpense, 
                     </div>
                     <strong>{money(expense.amount)}</strong>
                   </div>
-                  <div className="category-actions expense-actions">
-                    <button className="secondary-button" type="button" onClick={() => startEditing(expense)}>
-                      Edit
-                    </button>
-                    <button className="danger-button" type="button" onClick={() => handleDelete(expense)}>
-                      Delete
-                    </button>
-                  </div>
+                  {expense.purchase_event_id ? (
+                    <p>
+                      Confirmed purchase #{expense.purchase_event_id} · Item #
+                      {expense.originating_item_id} · Audit record (read only)
+                    </p>
+                  ) : (
+                    <div className="category-actions expense-actions">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => startEditing(expense)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="danger-button"
+                        type="button"
+                        onClick={() => handleDelete(expense)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </article>
           ))
         )}
       </div>
+      {expenses.length > visibleCount && (
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => setVisibleCount((count) => count + 24)}
+        >
+          Show more expenses
+        </button>
+      )}
     </section>
   );
 }
